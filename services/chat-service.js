@@ -1,33 +1,52 @@
 "use strict";
 const axios = require("axios");
-const cors = require("cors");
-const express = require("express");
-let app = express();
-app.use(cors);
+
+const customerMap = new Map();
 
 const port = 3000;
-
-const baseURL = "http://10.134.47.235:31380";
+const channelProviderId = "SunShineConnector";
+const callBackURL = "http://135.123.64.15:" + port + "/messages";
+const tenantId = "LOIHRF";
 
 // https://codingwithspike.wordpress.com/2018/03/10/making-settimeout-an-async-await-function/
 // Making setTimeout an async/await function
-async function wait(ms) {
-  try {
-    return new Promise((resolve) => {
-      setTimeout(resolve, ms);
-    });
-  } catch (err) {
-    console.log(`Error in function wait: ${err.message}`);
-  }
-}
 
 const chatService = {
-  async createSession() {
+  async createWebHook() {
+    const requestBody = [
+      {
+        callbackUrl: callBackURL,
+        eventTypes: ["MESSAGES"],
+      },
+    ];
+
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+
+    try {
+      const webHookPost = await axios.post(
+        "http://10.134.47.235/msg-webhook/v1/channel-providers/" +
+          channelProviderId +
+          "/webhooks",
+        JSON.stringify(requestBody),
+        config
+      );
+      console.log(`Here in webHook, webhookId: ${webHookPost.data.webhookId}`);
+    } catch (err) {
+      console.log(`Create WebHook Error: ${err.message}`);
+    }
+  },
+
+  async createSession(displayName) {
     const requestBody = {
-      tenantId: "WQHIKJ",
+      tenantId: tenantId,
       customerIdentifier: "custId",
+      channelProviderId: channelProviderId,
       userId: "1234",
-      displayName: "DermotNodeJS",
+      displayName: displayName,
       firstName: "Dermot",
       lastName: "Sheerin",
       emailAddress: "japanese",
@@ -59,13 +78,16 @@ const chatService = {
     }
   },
 
+  async waitForAgentJoin(engagementId) {
+    return;
+  },
+
   async createEngagement(sessionId) {
-    await wait(2000);
     const requestBody = {
       sessionId: sessionId,
-      tenantId: "WQHIKJ",
+      tenantId: tenantId,
       customerIdentifier: "custId",
-      channelProviderId: "SunShineConnector",
+      channelProviderId: channelProviderId,
       conversation: "Well Savo here ....",
       mediaType: "CHAT",
       contextParameters: {
@@ -88,20 +110,41 @@ const chatService = {
 
       console.log(engagement.data.engagementId);
       return (engagement.status = 200
-        ? engagement.data.engagementId
+        ? {
+            engagementId: engagement.data.engagementId,
+            correlationId: engagement.data.correlationId,
+            dialogId: engagement.data.dialogId,
+          }
         : console.log(engagement.status));
+      // throw an exception here if 200ok does not come back
+      // have a counter for num of successful and failed chats (global variable, increment as i go)
     } catch (err) {
       console.log(`Create Engagement Error: ${err.message}`);
     }
   },
 
-  async createWebHook() {
-    const requestBody = [
-      {
-        callbackUrl: "http://test912u343",
-        eventTypes: ["ALL"],
+  async sendChat(
+    sessionId,
+    engagementId,
+    correlationId,
+    dialogId,
+    chatMessage
+  ) {
+    const requestBody = {
+      correlationId: correlationId,
+      parentMessageId: "parentMessageId",
+      sessionId: sessionId,
+      dialogId: dialogId,
+      senderType: "CUSTOMER",
+      senderName: "Test Name",
+      body: {
+        elementType: "Text",
+        elementText: {
+          text: chatMessage,
+          textFormat: "PLAINTEXT",
+        },
       },
-    ];
+    };
 
     const config = {
       headers: {
@@ -109,23 +152,33 @@ const chatService = {
       },
     };
 
+    const url =
+      "http://10.134.47.235:31380/api/digital/v1/engagements/" +
+      engagementId +
+      "/messages";
+
     try {
-      const webHookPost = await axios.post(
-        "http://10.134.47.235/msg-webhook/v1/channel-providers/Reserved4Auto_sunshineProvider/webhooks",
+      const response = await axios.post(
+        url,
         JSON.stringify(requestBody),
-        config,
-        function (req, res) {
-          console.log("Got a GET request for the homepage");
-          res.send("Hello GET");
-        }
+        config
       );
-      console.log(`Here in webHook ${webHookPost.data.webhookId}`);
+      return response;
     } catch (err) {
-      console.log(`Create WebHook Error: ${err.message}`);
+      console.log(`SendChat Error: ${err.message}`);
     }
   },
 };
 
-app.listen(port, () => console.log(`Server running on port ${port}`));
-
 module.exports = chatService;
+
+// fs.appendFile(
+//     "C:\\Users\\sheerin\\Documents\\ixRES.txt",
+//     JSON.stringify(req),
+//     function (err, file) {
+//       if (err) throw err;
+//       console.log("Saved!");
+//       //console.log(req.events);
+//       // res.send("Hello GET");
+//     }
+// );
