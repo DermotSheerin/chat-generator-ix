@@ -6,10 +6,19 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-let chatSentCounter = 0;
-let chatSendMax = 10;
+// max messages each user will send
+let chatSendMax = 3;
+// initial chat counter value
+let chatCounter = 0;
+
+// time generator waits before sending the first chat message
+let initialMessageSend = 10000;
+
+// time to wait between sending messages
+let messageSendDelay = 5000;
 
 const engagementStateMap = new Map();
+const chatCounterMap = new Map();
 
 async function wait(ms) {
   try {
@@ -21,16 +30,17 @@ async function wait(ms) {
   }
 }
 
-//const chatService = new ChatService("http://10.134.47.235:31380");
 
 // pass in username to this function
-async function createChatSession(displayName) {
+async function setupChatEngagement(displayName) {
   let sessionId;
   let correlationId;
   let engagementId;
   let dialogId;
+
   // try catch - inside try increment success, catch increment fail and report exception
   //const webHook = await chatService.createWebHook();
+
   // pass in userName to createSession
   sessionId = await chatService.createSession(displayName);
   console.log("=====> here is sessionID in LOOP: " + sessionId);
@@ -42,43 +52,66 @@ async function createChatSession(displayName) {
   correlationId = engagement.correlationId;
   dialogId = engagement.dialogId;
 
-  console.log("Should be waiting on Agent Join now");
 
+  console.log("Should be waiting on Agent Join now: " + chatCounter);
+
+  // store session and state details in engagement MAP
   engagementStateMap.set(engagementId, {
     state: "ENGAGED",
     sessionId,
     correlationId,
-    dialogId,
+    dialogId
   });
+
+  // store chatCounter in chatCounter MAP
+  chatCounterMap.set(engagementId, chatCounter);
 }
 
-async function agentJoinReceived(engagementId) {
+function agentJoinReceived(engagementId) {
+  // update Engagement MAP with new state
   updateEngagementState(engagementId, "PARTICIPANT_ADDED");
   console.log("here in agentJoinReceived");
+
+  // initiate chat conversation after specified time
   setTimeout(() => {
     initiateChatSession(engagementId);
-  }, 10000);
+  }, initialMessageSend);
 }
 
-async function agentChatReceived(engagementId, chatReceived) {
+function agentChatReceived(engagementId, chatReceived) {
+  // update Engagement MAP with new state
   updateEngagementState(engagementId, "Receive_Chat");
   console.log("here in agentChatReceived");
+
+  // initiate chat conversation after specified time
   setTimeout(() => {
     initiateChatSession(engagementId, chatReceived);
-  }, 5000);
+  }, messageSendDelay);
 }
 
 async function initiateChatSession(engagementId, chatMessage) {
-  let { sessionId, correlationId, dialogId } = await updateEngagementState(
+  // update Engagement MAP with new state and retrieve session details
+  let { sessionId, correlationId, dialogId } = updateEngagementState(
     engagementId,
     "Send_Chat"
   );
 
-  if (chatSentCounter < chatSendMax) {
+  // retrieve chatCounter value from MAP
+  chatCounter = chatCounterMap.get(engagementId);
+
+  if (chatCounter < chatSendMax) {
     if (!chatMessage) {
       chatMessage = "This is default message sent by nodeJS Generator";
-    } else chatMessage = chatMessage;
-  } else chatMessage = "###BYE###";
+      chatCounter ++;
+    } else  chatCounter ++; // increment counter and echo back message sent by agent
+  } else  {
+    console.log(`Here is chatCounter before BYE ${chatCounter}`);
+    chatMessage = "###BYE###";
+    chatCounterMap.set(engagementId, 0);
+    setTimeout(() => {
+      setupChatEngagement('Dermot');
+    }, 20000);
+  }
 
   const response = await chatService.sendChat(
     sessionId,
@@ -88,12 +121,13 @@ async function initiateChatSession(engagementId, chatMessage) {
     chatMessage
   );
 
-  response.status = 200 && chatSentCounter++;
-  console.log(chatSentCounter);
+  // if chat was sent successfully, update the counter in chatCounter MAP
+  response.status = 200 && chatCounterMap.set(engagementId, chatCounter);
+  console.log(`Here is latest chatCounterMAP value: ${chatCounterMap.get(engagementId)}`);
 }
 
-async function updateEngagementState(engagementId, updateState) {
-  let engagementDetails = await engagementStateMap.get(engagementId);
+function updateEngagementState(engagementId, updateState) {
+  let engagementDetails = engagementStateMap.get(engagementId);
   let { sessionId, correlationId, dialogId } = engagementDetails;
 
   let state = updateState;
@@ -102,24 +136,19 @@ async function updateEngagementState(engagementId, updateState) {
     state,
     sessionId,
     correlationId,
-    dialogId,
+    dialogId
   });
 
   return { state, sessionId, correlationId, dialogId };
 }
 
-app.post("/partAdded", function (req, res) {
-  // extract engId (equiv to Java Future) -
-  // check for eventTYpe===Participant_Added and participantType=Agent
-  // get promise from agentJoin promise Map
-  // set promise=ready
-  // remove promise from map, continue
-  // use similiar to above when waiting on agent message, create a new Map for this
-  console.log("Event Received from IX");
+// call participantAddedEvent function when PARTICIPANT_ADDED event received for AGENT
+let participantAddedEvent = function(req, res,) {
+  console.log(`Event Received from IX to /partAdded: ${req.body.eventType} and partType: ${req.body.participantType}`);
   // Listen for Agent Join
   if (
-    req.body.eventType === "PARTICIPANT_ADDED" &&
-    req.body.participantType === "AGENT"
+      req.body.eventType === "PARTICIPANT_ADDED" &&
+      req.body.participantType === "AGENT"
   ) {
     res.sendStatus(200);
     console.log("Agent Join Received");
@@ -127,109 +156,43 @@ app.post("/partAdded", function (req, res) {
   } else {
     res.sendStatus(200);
   }
-});
+}
 
-app.post("/messages", function (req, res) {
-  // extract engId (equiv to Java Future) -
-  // check for eventTYpe===Participant_Added and participantType=Agent
-  // get promise from agentJoin promise Map
-  // set promise=ready
-  // remove promise from map, continue
-  // use similiar to above when waiting on agent message, create a new Map for this
-  console.log("Event Received from IX");
-  // Listen for Agent Join
+// call messageReceivedEvent function when MESSAGES are received from AGENT
+let messageReceivedEvent = function(req, res,) {
+  console.log(`Event Received from IX to /messages: ${req.body.eventType} and partType: ${req.body.participantType}`);
+  // Listen for Messages Received
   if (req.body.senderType === "AGENT") {
     res.sendStatus(200);
     console.log("Chat Message Received");
     console.log(`Here is the eventType: ${req.body.eventType}`);
     console.log(`Here is the senderType: ${req.body.senderType}`);
     console.log(
-      `Agent Sent this:\n #########   ${req.body.body.elementText.text}   #########`
+        `Agent Sent this:\n #########   ${req.body.body.elementText.text}   #########`
     );
     agentChatReceived(req.body.engagementId, req.body.body.elementText.text);
   } else {
     res.sendStatus(200);
   }
-});
+}
 
-// create waiting on agent join promise
-// add promise to agentJoin promise map, key=engId, value=promise
-// wait on agent join promise
+app.post("/partAdded", participantAddedEvent);
 
-// const sendChat = await chatService.sendChat(
-//   sessionId,
-//   engagement.correlationId,
-//   engagement.engagementId,
-//   engagement.dialogId
-// );
-// loop send chats, wait for agent response then after last chat send ###BYE### then close the session
-
-// Express - LATEST Aug 2nd
-// app.post("/messages", async function (req, res) {
-//   // extract engId (equiv to Java Future) -
-//   // check for eventTYpe===Participant_Added and participantType=Agent
-//   // get promise from agentJoin promise Map
-//   // set promise=ready
-//   // remove promise from map, continue
-//   // use similiar to above when waiting on agent message, create a new Map for this
-//   console.log("Event Received from IX");
-//   // Listen for Agent Join
-//   if (
-//     req.body.eventType === "PARTICIPANT_ADDED" &&
-//     req.body.participantType === "AGENT" &&
-//     req.body.engagementId === engagementId
-//   ) {
-//     res.sendStatus(200);
-//     agentJoinReceived(engagementId);
-//     console.log("Agent Join Received");
-//   } else {
-//     res.sendStatus(200);
-//   }
-// });
+app.post("/messages", messageReceivedEvent);
 
 let server = app.listen(3000, function () {
   let host = server.address().address;
   let port = server.address().port;
 
-  // loop 1 to N number of concurrent loops sessions
-  // username =John.index
-  // createChatSession(add username to function parameters);
-
-  let i = 1
-  let displayName = "Dermot"
-  while (i < 3) {
-    createChatSession(displayName + i);
-    console.log(`Running createChatSession(${displayName + i})`)
-    i++;
-  }
-  //createChatSession();
+  // let i = 1
+  // let displayName = "Dermot"
+  // while (i < 3) {
+  //   createChatSession(displayName + i);
+  //   console.log(`Running createChatSession(${displayName + i})`)
+  //   i++;
+  // }
+  setupChatEngagement('Dermot');
 
   console.log("Example app listening at http://localhost", host, port);
 });
 
-// Working code for monitoring events
-// if (req.body.participantType === "CUSTOMER") {
-//   console.log("Got a POST request IX Digital Chat");
-//   console.log(`Here is the eventType: ${req.body.eventType}`);
-//   console.log(`Here is the participantType: ${req.body.participantType}`);
-//   res.sendStatus(200);
-// } else if (req.body.senderType === "AGENT") {
-//   console.log("Got a POST request IX Digital Chat");
-//   console.log(`Here is the eventType: ${req.body.eventType}`);
-//   console.log(`Here is the senderType: ${req.body.senderType}`);
-//   console.log(
-//       `Agent Sent this:\n #########   ${req.body.body.elementText.text}   #########`
-//   );
-//   res.sendStatus(200);
-// }
-
-// WORKING operator
-// app.post("/messages", function (req, res) {
-//   req.body.eventType === "PARTICIPANT_ADDED" &&
-//   req.body.participantType === "AGENT" &&
-//   req.body.engagementId === engagementId
-//       ? (res.sendStatus(200),
-//           agentJoinReceived(engagementId),
-//           console.log("Agent Join Received"))
-//       : res.sendStatus(200);
-// });

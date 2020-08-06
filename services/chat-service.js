@@ -1,7 +1,6 @@
 "use strict";
 const axios = require("axios");
 
-const customerMap = new Map();
 
 const port = 3000;
 const channelProviderId = "SunShineConnector";
