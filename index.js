@@ -20,7 +20,7 @@ let messageSendDelay = 5000;
 const engagementStateMap = new Map();
 const chatCounterMap = new Map();
 
-async function wait(ms) {
+wait = async (ms) => {
   try {
     return new Promise((resolve) => {
       setTimeout(resolve, ms);
@@ -32,7 +32,7 @@ async function wait(ms) {
 
 
 // pass in username to this function
-async function setupChatEngagement(displayName) {
+setupChatEngagement = async (displayName) => {
   let sessionId;
   let correlationId;
   let engagementId;
@@ -67,7 +67,7 @@ async function setupChatEngagement(displayName) {
   chatCounterMap.set(engagementId, chatCounter);
 }
 
-function agentJoinReceived(engagementId) {
+agentJoinReceived = (engagementId) => {
   // update Engagement MAP with new state
   updateEngagementState(engagementId, "PARTICIPANT_ADDED");
   console.log("here in agentJoinReceived");
@@ -78,7 +78,7 @@ function agentJoinReceived(engagementId) {
   }, initialMessageSend);
 }
 
-function agentChatReceived(engagementId, chatReceived) {
+agentChatReceived = (engagementId, chatReceived) => {
   // update Engagement MAP with new state
   updateEngagementState(engagementId, "Receive_Chat");
   console.log("here in agentChatReceived");
@@ -89,7 +89,7 @@ function agentChatReceived(engagementId, chatReceived) {
   }, messageSendDelay);
 }
 
-async function initiateChatSession(engagementId, chatMessage) {
+initiateChatSession = async (engagementId, chatMessage) => {
   // update Engagement MAP with new state and retrieve session details
   let { sessionId, correlationId, dialogId } = updateEngagementState(
     engagementId,
@@ -126,7 +126,7 @@ async function initiateChatSession(engagementId, chatMessage) {
   console.log(`Here is latest chatCounterMAP value: ${chatCounterMap.get(engagementId)}`);
 }
 
-function updateEngagementState(engagementId, updateState) {
+updateEngagementState = (engagementId, updateState) => {
   let engagementDetails = engagementStateMap.get(engagementId);
   let { sessionId, correlationId, dialogId } = engagementDetails;
 
@@ -142,8 +142,43 @@ function updateEngagementState(engagementId, updateState) {
   return { state, sessionId, correlationId, dialogId };
 }
 
-// call participantAddedEvent function when PARTICIPANT_ADDED event received for AGENT
-let participantAddedEvent = function(req, res,) {
+
+
+// //call participantAddedEvent function when PARTICIPANT_ADDED event received for AGENT
+// participantAddedEvent = (req, res) => {
+//   console.log(`Event Received from IX to /partAdded: ${req.body.eventType} and partType: ${req.body.participantType}`);
+//   // Listen for Agent Join
+//   if (
+//       req.body.eventType === "PARTICIPANT_ADDED" &&
+//       req.body.participantType === "AGENT"
+//   ) {
+//     res.sendStatus(200);
+//     console.log("Agent Join Received");
+//     agentJoinReceived(req.body.engagementId);
+//   } else {
+//     res.sendStatus(200);
+//   }
+// }
+//
+// // call messageReceivedEvent function when MESSAGES are received from AGENT
+// messageReceivedEvent = (req, res,) => {
+//   console.log(`Event Received from IX to /messages: ${req.body.eventType} and partType: ${req.body.participantType}`);
+//   // Listen for Messages Received
+//   if (req.body.senderType === "AGENT") {
+//     res.sendStatus(200);
+//     console.log("Chat Message Received");
+//     console.log(`Here is the eventType: ${req.body.eventType}`);
+//     console.log(`Here is the senderType: ${req.body.senderType}`);
+//     console.log(
+//         `Agent Sent this:\n #########   ${req.body.body.elementText.text}   #########`
+//     );
+//     agentChatReceived(req.body.engagementId, req.body.body.elementText.text);
+//   } else {
+//     res.sendStatus(200);
+//   }
+// }
+
+allEvents = (req, res) => {
   console.log(`Event Received from IX to /partAdded: ${req.body.eventType} and partType: ${req.body.participantType}`);
   // Listen for Agent Join
   if (
@@ -153,16 +188,7 @@ let participantAddedEvent = function(req, res,) {
     res.sendStatus(200);
     console.log("Agent Join Received");
     agentJoinReceived(req.body.engagementId);
-  } else {
-    res.sendStatus(200);
-  }
-}
-
-// call messageReceivedEvent function when MESSAGES are received from AGENT
-let messageReceivedEvent = function(req, res,) {
-  console.log(`Event Received from IX to /messages: ${req.body.eventType} and partType: ${req.body.participantType}`);
-  // Listen for Messages Received
-  if (req.body.senderType === "AGENT") {
+  } else if (req.body.senderType === "AGENT") {
     res.sendStatus(200);
     console.log("Chat Message Received");
     console.log(`Here is the eventType: ${req.body.eventType}`);
@@ -176,9 +202,12 @@ let messageReceivedEvent = function(req, res,) {
   }
 }
 
-app.post("/partAdded", participantAddedEvent);
 
-app.post("/messages", messageReceivedEvent);
+app.post("/allEvents", allEvents);
+
+// app.post("/partAdded", participantAddedEvent);
+//
+// app.post("/messages", messageReceivedEvent);
 
 let server = app.listen(3000, function () {
   let host = server.address().address;
