@@ -162,21 +162,3 @@ let server = app.listen(3000, function () {
 
   console.log("Example app listening at http://localhost", host, port);
 });
-
-// agentJoinPromise = async (engagementId, fulfilled) => {
-//   try {
-//     let promise = new Promise((resolve) => {
-//       if (!fulfilled) {
-//         console.log('NOT Fulfilled')
-//         promiseMap.set(engagementId, resolve);
-//       } else {
-//         console.log('going to resolve')
-//         resolve('fulfilled')
-//         console.log(promise)
-//         console.log(promiseMap.get(engagementId))
-//       }
-//     });
-//   } catch (err) {
-//     console.log(`Error in agentJoinPromise: ${err.message}`);
-//   }
-// }
