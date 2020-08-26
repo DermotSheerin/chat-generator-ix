@@ -106,12 +106,11 @@ const chatService = {
 
       console.log(engagement.data.engagementId);
       return await (engagement.status = 200
-        ? engagement.data.engagementId
-          // {
-          //   //engagementId: engagement.data.engagementId
-          //   // correlationId: engagement.data.correlationId,
-          //   // dialogId: engagement.data.dialogId,
-          // }
+        ?  {
+            engagementId: engagement.data.engagementId,
+            correlationId: engagement.data.correlationId,
+            dialogId: engagement.data.dialogId,
+          }
         : console.log(engagement.status));
       // throw an exception here if 200ok does not come back
       // have a counter for num of successful and failed chats (global variable, increment as i go)
