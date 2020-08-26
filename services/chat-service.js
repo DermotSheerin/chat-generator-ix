@@ -5,7 +5,7 @@ const axios = require("axios");
 const port = 3000;
 const channelProviderId = "SunShineConnector";
 const callBackURL = "http://135.123.64.15:" + port + "/messages";
-const tenantId = "LOIHRF";
+const tenantId = "WKABCK";
 
 // https://codingwithspike.wordpress.com/2018/03/10/making-settimeout-an-async-await-function/
 // Making setTimeout an async/await function
@@ -27,7 +27,7 @@ const chatService = {
 
     try {
       const webHookPost = await axios.post(
-        "http://10.134.47.235/msg-webhook/v1/channel-providers/" +
+        "http://10.134.47.235/api/digital/v1/channel-providers/" +
           channelProviderId +
           "/webhooks",
         JSON.stringify(requestBody),
@@ -48,10 +48,10 @@ const chatService = {
       displayName: displayName,
       firstName: "Dermot",
       lastName: "Sheerin",
-      emailAddress: "japanese",
+      emailAddress: "english@fs2.lab",
       contactNumber: "5555",
       sessionParameters: {
-        language: "Japanese",
+        language:"English",
       },
     };
 
@@ -63,7 +63,7 @@ const chatService = {
 
     try {
       const session = await axios.post(
-        "http://10.134.47.235:31380/api/digital/v1/sessions",
+        "http://10.134.47.235/api/digital/v1/sessions",
         JSON.stringify(requestBody),
         config
       );
@@ -77,9 +77,6 @@ const chatService = {
     }
   },
 
-  async waitForAgentJoin(engagementId) {
-    return;
-  },
 
   async createEngagement(sessionId) {
     const requestBody = {
@@ -90,7 +87,7 @@ const chatService = {
       conversation: "Well Savo here ....",
       mediaType: "CHAT",
       contextParameters: {
-        language: "Japanese",
+        language:"English",
       },
     };
 
@@ -102,18 +99,19 @@ const chatService = {
 
     try {
       const engagement = await axios.post(
-        "http://10.134.47.235:31380/api/digital/v1/engagements",
+        "http://10.134.47.235/api/digital/v1/engagements",
         JSON.stringify(requestBody),
         config
       );
 
       console.log(engagement.data.engagementId);
-      return (engagement.status = 200
-        ? {
-            engagementId: engagement.data.engagementId,
-            correlationId: engagement.data.correlationId,
-            dialogId: engagement.data.dialogId,
-          }
+      return await (engagement.status = 200
+        ? engagement.data.engagementId
+          // {
+          //   //engagementId: engagement.data.engagementId
+          //   // correlationId: engagement.data.correlationId,
+          //   // dialogId: engagement.data.dialogId,
+          // }
         : console.log(engagement.status));
       // throw an exception here if 200ok does not come back
       // have a counter for num of successful and failed chats (global variable, increment as i go)
@@ -152,7 +150,7 @@ const chatService = {
     };
 
     const url =
-      "http://10.134.47.235:31380/api/digital/v1/engagements/" +
+      "http://10.134.47.235/api/digital/v1/engagements/" +
       engagementId +
       "/messages";
 
@@ -171,13 +169,3 @@ const chatService = {
 
 module.exports = chatService;
 
-// fs.appendFile(
-//     "C:\\Users\\sheerin\\Documents\\ixRES.txt",
-//     JSON.stringify(req),
-//     function (err, file) {
-//       if (err) throw err;
-//       console.log("Saved!");
-//       //console.log(req.events);
-//       // res.send("Hello GET");
-//     }
-// );
