@@ -114,7 +114,7 @@ allEvents = (req, res) => {
     console.log(`Agent Join Received for engId: ${req.body.engagementId} `);
 
     // verify the engagementID is stored in the promiseMap
-    return promiseMap[req.body.engagementId]
+    promiseMap[req.body.engagementId]
       ? (console.log(
           `Engagement ID IS contained within the promiseMap: ${req.body.engagementId}`
         ),
