@@ -19,5 +19,8 @@
     "express": "^4.17.1",
     "fs": "0.0.1-security",
     "prettier": "^2.0.5"
+  },
+  "devDependencies": {
+    "chalk": "^4.1.0"
   }
 }
