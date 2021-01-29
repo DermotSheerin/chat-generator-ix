@@ -1,10 +1,16 @@
 "use strict";
 const axios = require("axios");
 const chalk = require("chalk");
-const port = 3000;
+const port = 8000;
 const channelProviderId = "SunShineConnector";
-const callBackURL = "http://135.123.64.15:" + port + "/messages";
+
+// const callBackURL = "http://135.123.65.38:" + port + "/allEvents";
+// const tenantId = "WKABCK";
+// const IX_CLUSTER_IP = "10.134.47.235";
+
+const callBackURL = "http://135.123.64.157:" + port + "/allEvents";
 const tenantId = "WKABCK";
+const IX_CLUSTER_IP = "10.134.45.26:3000";
 
 // https://codingwithspike.wordpress.com/2018/03/10/making-settimeout-an-async-await-function/
 // Making setTimeout an async/await function
@@ -12,6 +18,7 @@ const tenantId = "WKABCK";
 const config = {
   headers: {
     "Content-Type": "application/json",
+    "Accept": "application/json" // added Sept 9th
   },
 };
 
@@ -20,21 +27,67 @@ const chatService = {
     const requestBody = [
       {
         callbackUrl: callBackURL,
-        eventTypes: ["MESSAGES"],
+        eventTypes: ["ALL"],
       },
     ];
 
     try {
       const webHookPost = await axios.post(
-        "http://10.134.47.235/api/digital/v1/channel-providers/" +
+        "http://" +
+          IX_CLUSTER_IP +
+          "/api/digital/v1/channel-providers/" +
           channelProviderId +
           "/webhooks",
         JSON.stringify(requestBody),
         config
       );
-      console.log(`Here in webHook, webhookId: ${webHookPost.data.webhookId}`);
+
+      if (webHookPost.status === 201) {
+        return { webhookId: webHookPost.data.webhookId, success: true };
+      } else {
+        console.log(
+          chalk.red(
+            `Create Webhook Error, Webhook Status code: ${webHookPost.status}`
+          )
+        );
+        return { success: false };
+      }
     } catch (err) {
-      console.log(`Create WebHook Error: ${err.message}`);
+      console.log(chalk.red(`Create Webhook Error: ${err.message}`));
+      return { success: false };
+    }
+  },
+
+  async deleteWebHook(webhookId) {
+    try {
+      const webHookPost = await axios.delete(
+        "http://" +
+          IX_CLUSTER_IP +
+          "/api/digital/v1/channel-providers/" +
+          channelProviderId +
+          "/webhooks/" +
+          webhookId,
+        config
+      );
+
+      if (webHookPost.status === 200) {
+        console.log(
+          chalk.green(
+            `Webhook Deleted Successfully, Status code: ${webHookPost.status}`
+          )
+        );
+        return { success: true };
+      } else {
+        console.log(
+          chalk.red(
+            `Delete Webhook Error, Webhook Status code: ${webHookPost.status}`
+          )
+        );
+        return { success: false };
+      }
+    } catch (err) {
+      console.log(chalk.red(`Delete Webhook Error: ${err.message}`));
+      return { success: false };
     }
   },
 
@@ -56,7 +109,7 @@ const chatService = {
 
     try {
       const session = await axios.post(
-        "http://10.134.47.235/api/digital/v1/sessions",
+        "http://" + IX_CLUSTER_IP + "/api/digital/v1/sessions",
         JSON.stringify(requestBody),
         config
       );
@@ -68,11 +121,41 @@ const chatService = {
       if (session.status === 201) {
         return { sessionId: session.data.sessionId, success: true };
       } else {
-        console.log(chalk.red(`Create Session Error, Session Status code: ${session.status}`));
+        console.log(
+          chalk.red(
+            `Create Session Error, Session Status code: ${session.status}`
+          )
+        );
         return { success: false };
       }
     } catch (err) {
       console.log(chalk.red(`Create Session Error: ${err.message}`));
+      return { success: false };
+    }
+  },
+
+  async terminateSession(sessionId) {
+    const data = {"channelProviderId": channelProviderId, "reason":"USER_CLOSED"}
+
+    try {
+      const terminateSession = await axios.post(
+          "http://" + IX_CLUSTER_IP + "/api/digital/v1/sessions/" + sessionId + ":terminate",
+          data,
+          config
+      );
+
+      if (terminateSession.status === 200) {
+        return { success: true };
+      } else {
+        console.log(
+            chalk.red(
+                `Terminate Session Error, Session Status code: ${terminateSession.status}`
+            )
+        );
+        return { success: false };
+      }
+    } catch (err) {
+      console.log(chalk.red(`Terminate Session Error: ${err.message}`));
       return { success: false };
     }
   },
@@ -92,7 +175,7 @@ const chatService = {
 
     try {
       const engagement = await axios.post(
-        "http://10.134.47.235/api/digital/v1/engagements",
+        "http://" + IX_CLUSTER_IP + "/api/digital/v1/engagements",
         JSON.stringify(requestBody),
         config
       );
@@ -102,29 +185,74 @@ const chatService = {
           engagementId: engagement.data.engagementId,
           correlationId: engagement.data.correlationId,
           dialogId: engagement.data.dialogId,
+          sessionId: engagement.data.sessionId,
           success: true,
         };
       } else {
-        console.log(chalk.red(`Create Engagement Error, Engagement Status code: ${engagement.status}, sessionId: ${sessionId}`));
+        console.log(
+          chalk.red(
+            `Create Engagement Error, Engagement Status code: ${engagement.status}, sessionId: ${sessionId}`
+          )
+        );
         return { success: false };
       }
     } catch (err) {
-      console.log(chalk.red(`Create Engagement Error: ${err.message}, sessionId: ${sessionId}`));
+      console.log(
+        chalk.red(
+          `Create Engagement Error: ${err.message}, sessionId: ${sessionId}`
+        )
+      );
       return { success: false };
     }
+  },
 
-    // return await (engagement.status = 200
-    //   ? {
-    //       engagementId: engagement.data.engagementId,
-    //       correlationId: engagement.data.correlationId,
-    //       dialogId: engagement.data.dialogId,
-    //     }
-    //   : console.log(
-    //       chalk.red(`Create Engagement Error: ${engagement.status}`)
-    //     ));
+  async getParticipantId(engagementId) {
+    try {
+      const engagement = await axios.get(
+          "http://" + IX_CLUSTER_IP + "/api/digital/v1/engagements/" + engagementId,
+          config
+      );
 
-    // throw an exception here if 200ok does not come back
-    // have a counter for num of successful and failed chats (global variable, increment as i go)
+      if (engagement.status === 200) {
+        return { participantId: engagement.data.dialogs[0].sourceParticipantId, success: true };
+      } else {
+        console.log(
+            chalk.red(
+                `Retrieve Engagement Error, Engagement Status code: ${engagement.status}`
+            )
+        );
+        return { success: false };
+      }
+    } catch (err) {
+      console.log(chalk.red(`Retrieve Engagement Error: ${err.message}`));
+      return { success: false };
+    }
+  },
+
+  async disconnectEngagement(engagementId, sessionId, dialogId, participantId) {
+    const data = {sessionId : sessionId, dialogId : dialogId, participantId: participantId, reason : "USER_DISCONNECTED"}
+
+    try {
+      const disconnectEngagement = await axios.post(
+          "http://" + IX_CLUSTER_IP + "/api/digital/v1/engagements/" + engagementId + ":disconnect",
+          data,
+          config
+      );
+
+      if (disconnectEngagement.status === 200) {
+        return { success: true };
+      } else {
+        console.log(
+            chalk.red(
+                `Disconnect Engagement Error, Engagement Status code: ${disconnectEngagement.status}`
+            )
+        );
+        return { success: false };
+      }
+    } catch (err) {
+      console.log(chalk.red(`Disconnect Engagement Error: ${err.message}`));
+      return { success: false };
+    }
   },
 
   async sendChat(
@@ -151,7 +279,9 @@ const chatService = {
     };
 
     const url =
-      "http://10.134.47.235/api/digital/v1/engagements/" +
+      "http://" +
+      IX_CLUSTER_IP +
+      "/api/digital/v1/engagements/" +
       engagementId +
       "/messages";
 
@@ -165,11 +295,17 @@ const chatService = {
       if (response.status === 200) {
         return { success: true };
       } else {
-        console.log(chalk.red(`Send Chat Error, Chat Status code: ${response.status}, engId: ${engagementId}`));
+        console.log(
+          chalk.red(
+            `Send Chat Error, Chat Status code: ${response.status}, engId: ${engagementId}`
+          )
+        );
         return { success: false };
       }
     } catch (err) {
-      console.log(chalk.red(`Send Chat Error: ${err.message}, engId: ${engagementId}`));
+      console.log(
+        chalk.red(`Send Chat Error: ${err.message}, engId: ${engagementId}`)
+      );
       return { success: false };
     }
   },
