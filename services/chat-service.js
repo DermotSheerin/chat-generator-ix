@@ -1,8 +1,8 @@
 "use strict";
 const axios = require("axios");
-const chalk = require("chalk");
 const port = 8000;
 const channelProviderId = "SunShineConnector";
+const moment = require("moment");
 
 // const callBackURL = "http://135.123.65.38:" + port + "/allEvents";
 // const tenantId = "WKABCK";
@@ -14,6 +14,16 @@ const IX_CLUSTER_IP = "10.134.45.26:3000";
 
 // https://codingwithspike.wordpress.com/2018/03/10/making-settimeout-an-async-await-function/
 // Making setTimeout an async/await function
+
+function logMessage(message) {
+    const now = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss.SSS");
+    console.log(now, message);
+}
+
+function errorMessage(message) {
+    const now = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss.SSS");
+    console.error(now, message);
+}
 
 const config = {
     headers: {
@@ -45,15 +55,13 @@ const chatService = {
             if (webHookPost.status === 201) {
                 return {webhookId: webHookPost.data.webhookId, success: true};
             } else {
-                console.log(
-                    chalk.red(
-                        `Create Webhook Error, Webhook Status code: ${webHookPost.status}`
-                    )
+                errorMessage(
+                    `Create Webhook Error, Webhook Status code: ${webHookPost.status}`
                 );
                 return {success: false};
             }
         } catch (err) {
-            console.log(chalk.red(`Create Webhook Error: ${err.message}`));
+            errorMessage(`Create Webhook Error: ${err.message}`);
             return {success: false};
         }
     },
@@ -71,22 +79,18 @@ const chatService = {
             );
 
             if (webHookPost.status === 200) {
-                console.log(
-                    chalk.green(
-                        `Webhook Deleted Successfully, Status code: ${webHookPost.status}`
-                    )
+                logMessage(
+                    `Webhook Deleted Successfully, Status code: ${webHookPost.status}`
                 );
                 return {success: true};
             } else {
-                console.log(
-                    chalk.red(
-                        `Delete Webhook Error, Webhook Status code: ${webHookPost.status}`
-                    )
+                errorMessage(
+                    `Delete Webhook Error, Webhook Status code: ${webHookPost.status}`
                 );
                 return {success: false};
             }
         } catch (err) {
-            console.log(chalk.red(`Delete Webhook Error: ${err.message}`));
+            errorMessage(`Delete Webhook Error: ${err.message}`);
             return {success: false};
         }
     },
@@ -116,20 +120,18 @@ const chatService = {
 
             // return (session.status = 201
             //   ? session.data.sessionId
-            //   : console.log(chalk.red(`Create Session Error: ${session.status}`)));
+            //   : errorMessage(`Create Session Error: ${session.status}`));
 
             if (session.status === 201) {
                 return {sessionId: session.data.sessionId, success: true};
             } else {
-                console.log(
-                    chalk.red(
-                        `Create Session Error, Session Status code: ${session.status}`
-                    )
+                errorMessage(
+                    `Create Session Error, Session Status code: ${session.status}`
                 );
                 return {success: false};
             }
         } catch (err) {
-            console.log(chalk.red(`Create Session Error: ${err.message}`));
+            errorMessage(`Create Session Error: ${err.message}`);
             return {success: false};
         }
     },
@@ -147,15 +149,13 @@ const chatService = {
             if (terminateSession.status === 200) {
                 return {success: true};
             } else {
-                console.log(
-                    chalk.red(
-                        `Terminate Session Error, Session Status code: ${terminateSession.status}`
-                    )
+                errorMessage(
+                    `Terminate Session Error, Session Status code: ${terminateSession.status}`
                 );
                 return {success: false};
             }
         } catch (err) {
-            console.log(chalk.red(`Terminate Session Error: ${err.message}`));
+            errorMessage(`Terminate Session Error: ${err.message}`);
             return {success: false};
         }
     },
@@ -189,18 +189,14 @@ const chatService = {
                     success: true,
                 };
             } else {
-                console.log(
-                    chalk.red(
-                        `Create Engagement Error, Engagement Status code: ${engagement.status}, sessionId: ${sessionId}`
-                    )
+                errorMessage(
+                    `Create Engagement Error, Engagement Status code: ${engagement.status}, sessionId: ${sessionId}`
                 );
                 return {success: false};
             }
         } catch (err) {
-            console.log(
-                chalk.red(
-                    `Create Engagement Error: ${err.message}, sessionId: ${sessionId}`
-                )
+            errorMessage(
+                `Create Engagement Error: ${err.message}, sessionId: ${sessionId}`
             );
             return {success: false};
         }
@@ -216,15 +212,13 @@ const chatService = {
             if (engagement.status === 200) {
                 return {participantId: engagement.data.dialogs[0].sourceParticipantId, success: true};
             } else {
-                console.log(
-                    chalk.red(
-                        `Retrieve Engagement Error, Engagement Status code: ${engagement.status}`
-                    )
+                errorMessage(
+                    `Retrieve Engagement Error, Engagement Status code: ${engagement.status}`
                 );
                 return {success: false};
             }
         } catch (err) {
-            console.log(chalk.red(`Retrieve Engagement Error: ${err.message}`));
+            errorMessage(`Retrieve Engagement Error: ${err.message}`);
             return {success: false};
         }
     },
@@ -247,15 +241,13 @@ const chatService = {
             if (disconnectEngagement.status === 200) {
                 return {success: true};
             } else {
-                console.log(
-                    chalk.red(
-                        `Disconnect Engagement Error, Engagement Status code: ${disconnectEngagement.status}`
-                    )
+                errorMessage(
+                    `Disconnect Engagement Error, Engagement Status code: ${disconnectEngagement.status}`
                 );
                 return {success: false};
             }
         } catch (err) {
-            console.log(chalk.red(`Disconnect Engagement Error: ${err.message}`));
+            errorMessage(`Disconnect Engagement Error: ${err.message}`);
             return {success: false};
         }
     },
@@ -300,16 +292,14 @@ const chatService = {
             if (response.status === 200) {
                 return {success: true};
             } else {
-                console.log(
-                    chalk.red(
-                        `Send Chat Error, Chat Status code: ${response.status}, engId: ${engagementId}`
-                    )
+                errorMessage(
+                    `Send Chat Error, Chat Status code: ${response.status}, engId: ${engagementId}`
                 );
                 return {success: false};
             }
         } catch (err) {
-            console.log(
-                chalk.red(`Send Chat Error: ${err.message}, engId: ${engagementId}`)
+            errorMessage(
+                `Send Chat Error: ${err.message}, engId: ${engagementId}`
             );
             return {success: false};
         }
