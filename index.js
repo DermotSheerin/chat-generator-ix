@@ -1,14 +1,19 @@
 const chatService = require("./services/chat-service");
 const chalk = require("chalk");
-const express = require("express");
 const bodyParser = require("body-parser");
-const app = express();
 const cors = require("cors");
 const timeoutPromise = require("./timeout-promise");
 const moment = require("moment");
+// Require Express framework and instantiate it
+//const express = require("express");
+//const app = express();
 
-app.use(bodyParser.urlencoded({extended: false}));
-app.use(bodyParser.json(), cors());
+// Require Fastify framework and instantiate it
+const fastify = require("fastify")({logger: false});
+
+
+// app.use(bodyParser.urlencoded({extended: false}));
+// app.use(bodyParser.json(), cors());
 
 const port = 8000;
 
@@ -74,7 +79,7 @@ wait = async (ms) => {
 };
 
 // TEMPORARY CODE TO START RUN
-//startTest()
+startTest()
 
 
 async function startTest() {
@@ -257,16 +262,16 @@ function processAgentDisconnectEvent(engagementId) {
     //     logMessage(`######## Stopping Test ########`)));
 }
 
-allEvents = (req, res) => {
+allEvents = (req, reply) => {
     // Listen for Agent Join
     if (req.body.eventType === "PARTICIPANT_ADDED" && req.body.participantType === "AGENT") {
-        res.sendStatus(200);
+        reply.status(200);
         processAgentJoinEvent(req.body.engagementId);
     }
 
     // Listen for Agent Send Message
     else if (req.body.senderType === "AGENT") {
-        res.sendStatus(200);
+        reply.status(200);
 
         // after predefined delay respond to Agent message
         setTimeout(() => {
@@ -276,21 +281,25 @@ allEvents = (req, res) => {
 
     // Listen for Participant Disconnect
     else if (req.body.eventType === "PARTICIPANT_DISCONNECTED") {
-        res.sendStatus(200);
+        reply.status(200);
         processAgentDisconnectEvent(req.body.engagementId);
     } else {
-        res.sendStatus(200);
+        reply.status(200);
     }
 };
 
+// fastify.get('/joey', (req, reply) => {
+//     reply.send("HHHHHHHHHHHHHHHHHHH")
+// })
+
 // original code
 //app.post("/allEvents", allEvents);
-app.post("/", allEvents);
+fastify.post("/", allEvents);
 
 
 // set Chat Parameters
-app.post("/changeChatParameters", (req, res) => {
-    res.sendStatus(200);
+fastify.post("/changeChatParameters", (req, reply) => {
+    reply.status(200);
     concurrentCallers = req.body.concurrentCallers;
     chatSendMax = req.body.chatSendMax;
     firstMsgSendDelay = req.body.firstMsgSendDelay;
@@ -300,8 +309,8 @@ app.post("/changeChatParameters", (req, res) => {
 });
 
 // retrieve Chat Parameters
-app.get("/getChatParameters", (req, res) => {
-    res.send({
+fastify.get("/getChatParameters", (req, reply) => {
+    reply.send({
         concurrentCallers: concurrentCallers,
         chatSendMax: chatSendMax,
         firstMsgSendDelay: firstMsgSendDelay,
@@ -312,22 +321,22 @@ app.get("/getChatParameters", (req, res) => {
 });
 
 // GET to retrieve the chatStatsMap details
-app.get("/getStats", (req, res) => {
-    res.send(chatStatsMap);
+fastify.get("/getStats", (req, reply) => {
+    reply.send(chatStatsMap);
 });
 
 //GET to stop test gradually
-app.get("/stopTest", (req, res) => {
+fastify.get("/stopTest", (req, reply) => {
     startLoop = false;
-    res.send(`******** Test will terminate gracefully ********`);
+    reply.send(`******** Test will terminate gracefully ********`);
 });
 
 //GET to start test
-app.get("/startTest", (req, res) => {
+fastify.get("/startTest", (req, reply) => {
     //startLoop = true;
     startTest();
     logMessage(chalk.green("###### Chat Generator Started ######"));
-    res.send(`******** Test Starting ********`);
+    reply.send(`******** Test Starting ********`);
 });
 
 // toggle test start/stop
@@ -344,12 +353,17 @@ app.get("/startTest", (req, res) => {
 //   res.send("******** createCustomerChatWorkFlow Triggered Manually ********")
 // })
 
-let server = app.listen(port, function () {
-    let host = server.address().address;
-    //let port = server.address().port;
-
-
-    logMessage("Example app listening at http://localhost", host, port);
+// Run the server!
+fastify.listen(port, function (err, address) {
+    // if (err) {
+    //     fastify.log.error(err)
+    //     process.exit(1)
+    // }
+    //fastify.log.info(`server listening on ${address}`)
 });
+
+
+    //logMessage("Example app listening at http://localhost", host, port);
+
 
 
