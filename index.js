@@ -1,3 +1,5 @@
+//import express from "express";
+
 const chatService = require("./services/chat-service");
 const chalk = require("chalk");
 const bodyParser = require("body-parser");
@@ -8,10 +10,13 @@ const moment = require("moment");
 //const express = require("express");
 //const app = express();
 
+const port = 8000;
+
 // Require Fastify framework and instantiate it
 const fastify = require("fastify")({logger: false});
 fastify.register(require('fastify-cors'), {
-        origin: '*'
+        origin: '*',
+        methods: ["POST"]
     }
 );
 
@@ -19,8 +24,6 @@ fastify.register(require('fastify-cors'), {
 // app.use(bodyParser.urlencoded({extended: false}));
 // app.use(bodyParser.json(), cors());
 
-
-const port = 8000;
 
 const promiseMap = {};
 const engagementDetailsMap = {};
@@ -267,8 +270,43 @@ function processAgentDisconnectEvent(engagementId) {
     //     logMessage(`######## Stopping Test ########`)));
 }
 
-// allEvents = (req, reply) => {
+allEvents = (request, reply) => {
+    // Listen for Agent Join
+    if (request.body.eventType === "PARTICIPANT_ADDED" && request.body.participantType === "AGENT") {
+        reply.status(200);
+        processAgentJoinEvent(request.body.engagementId);
+    }
+
+    // Listen for Agent Send Message
+    else if (req.body.senderType === "AGENT") {
+        reply.status(200);
+
+        // after predefined delay respond to Agent message
+        setTimeout(() => {
+            processAgentSendMsgEvent(req.body.engagementId);
+        }, respondMsgDelay);
+    }
+
+    // Listen for Participant Disconnect
+    else if (req.body.eventType === "PARTICIPANT_DISCONNECTED") {
+        reply.status(200);
+        processAgentDisconnectEvent(req.body.engagementId);
+    } else {
+        reply.status(200);
+    }
+};
+
+// fastify.get('/joey', (req, reply) => {
+//     reply.send("HHHHHHHHHHHHHHHHHHH")
+// })
+
+// original code
+//app.post("/allEvents", allEvents);
+fastify.post("/allEvents", allEvents);
+
+// fastify.post("/", (req, reply) => {
 //     // Listen for Agent Join
+//     logMessage(`HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH ${req.body.eventType}`)
 //     if (req.body.eventType === "PARTICIPANT_ADDED" && req.body.participantType === "AGENT") {
 //         reply.status(200);
 //         processAgentJoinEvent(req.body.engagementId);
@@ -291,42 +329,7 @@ function processAgentDisconnectEvent(engagementId) {
 //     } else {
 //         reply.status(200);
 //     }
-// };
-
-// fastify.get('/joey', (req, reply) => {
-//     reply.send("HHHHHHHHHHHHHHHHHHH")
-// })
-
-// original code
-//app.post("/allEvents", allEvents);
-//fastify.post("/", allEvents);
-
-fastify.post("/", (req, reply) => {
-    // Listen for Agent Join
-    logMessage(`HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH ${req.body.eventType}`)
-    if (req.body.eventType === "PARTICIPANT_ADDED" && req.body.participantType === "AGENT") {
-        reply.status(200);
-        processAgentJoinEvent(req.body.engagementId);
-    }
-
-    // Listen for Agent Send Message
-    else if (req.body.senderType === "AGENT") {
-        reply.status(200);
-
-        // after predefined delay respond to Agent message
-        setTimeout(() => {
-            processAgentSendMsgEvent(req.body.engagementId);
-        }, respondMsgDelay);
-    }
-
-    // Listen for Participant Disconnect
-    else if (req.body.eventType === "PARTICIPANT_DISCONNECTED") {
-        reply.status(200);
-        processAgentDisconnectEvent(req.body.engagementId);
-    } else {
-        reply.status(200);
-    }
-});
+// });
 
 
 // set Chat Parameters
