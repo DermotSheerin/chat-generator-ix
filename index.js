@@ -10,10 +10,15 @@ const moment = require("moment");
 
 // Require Fastify framework and instantiate it
 const fastify = require("fastify")({logger: false});
+fastify.register(require('fastify-cors'), {
+        origin: '*'
+    }
+);
 
 
 // app.use(bodyParser.urlencoded({extended: false}));
 // app.use(bodyParser.json(), cors());
+
 
 const port = 8000;
 
@@ -79,7 +84,7 @@ wait = async (ms) => {
 };
 
 // TEMPORARY CODE TO START RUN
-startTest()
+//startTest()
 
 
 async function startTest() {
@@ -262,8 +267,43 @@ function processAgentDisconnectEvent(engagementId) {
     //     logMessage(`######## Stopping Test ########`)));
 }
 
-allEvents = (req, reply) => {
+// allEvents = (req, reply) => {
+//     // Listen for Agent Join
+//     if (req.body.eventType === "PARTICIPANT_ADDED" && req.body.participantType === "AGENT") {
+//         reply.status(200);
+//         processAgentJoinEvent(req.body.engagementId);
+//     }
+//
+//     // Listen for Agent Send Message
+//     else if (req.body.senderType === "AGENT") {
+//         reply.status(200);
+//
+//         // after predefined delay respond to Agent message
+//         setTimeout(() => {
+//             processAgentSendMsgEvent(req.body.engagementId);
+//         }, respondMsgDelay);
+//     }
+//
+//     // Listen for Participant Disconnect
+//     else if (req.body.eventType === "PARTICIPANT_DISCONNECTED") {
+//         reply.status(200);
+//         processAgentDisconnectEvent(req.body.engagementId);
+//     } else {
+//         reply.status(200);
+//     }
+// };
+
+// fastify.get('/joey', (req, reply) => {
+//     reply.send("HHHHHHHHHHHHHHHHHHH")
+// })
+
+// original code
+//app.post("/allEvents", allEvents);
+//fastify.post("/", allEvents);
+
+fastify.post("/", (req, reply) => {
     // Listen for Agent Join
+    logMessage(`HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH ${req.body.eventType}`)
     if (req.body.eventType === "PARTICIPANT_ADDED" && req.body.participantType === "AGENT") {
         reply.status(200);
         processAgentJoinEvent(req.body.engagementId);
@@ -286,15 +326,7 @@ allEvents = (req, reply) => {
     } else {
         reply.status(200);
     }
-};
-
-// fastify.get('/joey', (req, reply) => {
-//     reply.send("HHHHHHHHHHHHHHHHHHH")
-// })
-
-// original code
-//app.post("/allEvents", allEvents);
-fastify.post("/", allEvents);
+});
 
 
 // set Chat Parameters
@@ -363,7 +395,7 @@ fastify.listen(port, function (err, address) {
 });
 
 
-    //logMessage("Example app listening at http://localhost", host, port);
+//logMessage("Example app listening at http://localhost", host, port);
 
 
 
