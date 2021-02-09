@@ -11,6 +11,7 @@ const moment = require("moment");
 //const app = express();
 
 const port = 8000;
+const ip = "135.123.64.37";
 
 // Require Fastify framework and instantiate it
 const fastify = require("fastify")({logger: false});
@@ -273,26 +274,26 @@ function processAgentDisconnectEvent(engagementId) {
 allEvents = (request, reply) => {
     // Listen for Agent Join
     if (request.body.eventType === "PARTICIPANT_ADDED" && request.body.participantType === "AGENT") {
-        reply.status(200);
+        reply.code(200);
         processAgentJoinEvent(request.body.engagementId);
     }
 
     // Listen for Agent Send Message
-    else if (req.body.senderType === "AGENT") {
-        reply.status(200);
+    else if (request.body.senderType === "AGENT") {
+        reply.code(200);
 
         // after predefined delay respond to Agent message
         setTimeout(() => {
-            processAgentSendMsgEvent(req.body.engagementId);
+            processAgentSendMsgEvent(request.body.engagementId);
         }, respondMsgDelay);
     }
 
     // Listen for Participant Disconnect
-    else if (req.body.eventType === "PARTICIPANT_DISCONNECTED") {
-        reply.status(200);
-        processAgentDisconnectEvent(req.body.engagementId);
+    else if (request.body.eventType === "PARTICIPANT_DISCONNECTED") {
+        reply.code(200);
+        processAgentDisconnectEvent(request.body.engagementId);
     } else {
-        reply.status(200);
+        reply.code(200);
     }
 };
 
@@ -389,13 +390,14 @@ fastify.get("/startTest", (req, reply) => {
 // })
 
 // Run the server!
-fastify.listen(port, function (err, address) {
-    // if (err) {
-    //     fastify.log.error(err)
-    //     process.exit(1)
-    // }
-    //fastify.log.info(`server listening on ${address}`)
-});
+fastify.listen(port, ip);
+// fastify.listen(port, function (err, address) {
+//     // if (err) {
+//     //     fastify.log.error(err)
+//     //     process.exit(1)
+//     // }
+//     //fastify.log.info(`server listening on ${address}`)
+// });
 
 
 //logMessage("Example app listening at http://localhost", host, port);
