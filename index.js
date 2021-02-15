@@ -11,6 +11,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json(), cors());
 
 const port = 8000;
+const ip = "135.123.64.37";
 
 const promiseMap = {};
 const engagementDetailsMap = {};
@@ -283,9 +284,7 @@ allEvents = (req, res) => {
     }
 };
 
-// original code
-//app.post("/allEvents", allEvents);
-app.post("/", allEvents);
+app.post("/allEvents", allEvents);
 
 
 // set Chat Parameters
