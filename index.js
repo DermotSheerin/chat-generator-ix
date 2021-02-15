@@ -1,30 +1,19 @@
-//import express from "express";
-
 const chatService = require("./services/chat-service");
 const chalk = require("chalk");
-const bodyParser = require("body-parser");
-const cors = require("cors");
 const timeoutPromise = require("./timeout-promise");
 const moment = require("moment");
-// Require Express framework and instantiate it
-//const express = require("express");
-//const app = express();
 
 const port = 8000;
 const ip = "135.123.64.37";
 
 // Require Fastify framework and instantiate it
 const fastify = require("fastify")({logger: false});
+// fastify-cors enables the use of CORS in a Fastify application.
 fastify.register(require('fastify-cors'), {
         origin: '*',
         methods: ["POST"]
     }
 );
-
-
-// app.use(bodyParser.urlencoded({extended: false}));
-// app.use(bodyParser.json(), cors());
-
 
 const promiseMap = {};
 const engagementDetailsMap = {};
@@ -301,51 +290,22 @@ allEvents = (request, reply) => {
 //     reply.send("HHHHHHHHHHHHHHHHHHH")
 // })
 
-// original code
-//app.post("/allEvents", allEvents);
+
 fastify.post("/allEvents", allEvents);
 
-// fastify.post("/", (req, reply) => {
-//     // Listen for Agent Join
-//     logMessage(`HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH ${req.body.eventType}`)
-//     if (req.body.eventType === "PARTICIPANT_ADDED" && req.body.participantType === "AGENT") {
-//         reply.status(200);
-//         processAgentJoinEvent(req.body.engagementId);
-//     }
-//
-//     // Listen for Agent Send Message
-//     else if (req.body.senderType === "AGENT") {
-//         reply.status(200);
-//
-//         // after predefined delay respond to Agent message
-//         setTimeout(() => {
-//             processAgentSendMsgEvent(req.body.engagementId);
-//         }, respondMsgDelay);
-//     }
-//
-//     // Listen for Participant Disconnect
-//     else if (req.body.eventType === "PARTICIPANT_DISCONNECTED") {
-//         reply.status(200);
-//         processAgentDisconnectEvent(req.body.engagementId);
-//     } else {
-//         reply.status(200);
-//     }
-// });
-
-
 // set Chat Parameters
-fastify.post("/changeChatParameters", (req, reply) => {
-    reply.status(200);
-    concurrentCallers = req.body.concurrentCallers;
-    chatSendMax = req.body.chatSendMax;
-    firstMsgSendDelay = req.body.firstMsgSendDelay;
-    respondMsgDelay = req.body.respondMsgDelay;
-    delayBetweenLoops = req.body.delayBetweenLoops;
-    agentJoinTimeout = req.body.agentJoinTimeout;
+fastify.post("/changeChatParameters", (request, reply) => {
+    reply.code(200);
+    concurrentCallers = request.body.concurrentCallers;
+    chatSendMax = request.body.chatSendMax;
+    firstMsgSendDelay = request.body.firstMsgSendDelay;
+    respondMsgDelay = request.body.respondMsgDelay;
+    delayBetweenLoops = request.body.delayBetweenLoops;
+    agentJoinTimeout = request.body.agentJoinTimeout;
 });
 
 // retrieve Chat Parameters
-fastify.get("/getChatParameters", (req, reply) => {
+fastify.get("/getChatParameters", (request, reply) => {
     reply.send({
         concurrentCallers: concurrentCallers,
         chatSendMax: chatSendMax,
@@ -357,18 +317,18 @@ fastify.get("/getChatParameters", (req, reply) => {
 });
 
 // GET to retrieve the chatStatsMap details
-fastify.get("/getStats", (req, reply) => {
+fastify.get("/getStats", (request, reply) => {
     reply.send(chatStatsMap);
 });
 
 //GET to stop test gradually
-fastify.get("/stopTest", (req, reply) => {
+fastify.get("/stopTest", (request, reply) => {
     startLoop = false;
     reply.send(`******** Test will terminate gracefully ********`);
 });
 
 //GET to start test
-fastify.get("/startTest", (req, reply) => {
+fastify.get("/startTest", (request, reply) => {
     //startLoop = true;
     startTest();
     logMessage(chalk.green("###### Chat Generator Started ######"));
@@ -390,17 +350,13 @@ fastify.get("/startTest", (req, reply) => {
 // })
 
 // Run the server!
-fastify.listen(port, ip);
-// fastify.listen(port, function (err, address) {
-//     // if (err) {
-//     //     fastify.log.error(err)
-//     //     process.exit(1)
-//     // }
-//     //fastify.log.info(`server listening on ${address}`)
-// });
-
-
-//logMessage("Example app listening at http://localhost", host, port);
+fastify.listen(port, ip, (err, address) => {
+    if (err) {
+        fastify.log.error(err)
+        process.exit(1)
+    }
+    logMessage(`Fastify listening on: ${ip}:${port}`);
+})
 
 
 
