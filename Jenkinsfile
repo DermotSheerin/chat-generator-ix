@@ -1,10 +1,11 @@
 pipeline {
-    agent any
-
+    agent {
+        docker { image 'node:14-alpine' }
+    }
     stages {
-        stage('Hello') {
+        stage('Test') {
             steps {
-                echo 'Test Jenkins build from GitHub'
+                sh 'node --version'
             }
         }
     }
