@@ -1,10 +1,5 @@
-pipeline {
-    agent { dockerfile true }
-    stages {
-        stage('Test') {
-            steps {
-                sh 'node --version'
-            }
-        }
-    }
-}
+FROM node:12
+COPY . /
+RUN npm install
+EXPOSE 8888
+ENTRYPOINT [ "node", "index.js" ]
