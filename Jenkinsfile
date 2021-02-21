@@ -15,7 +15,7 @@ pipeline {
 		
 		stage('Deploy') {
             steps {
-                sh 'docker run -it -d -p 8000:8000 0431769ed47d'
+                sh 'docker run -it -d -p 8000:8000 f3273eb32e8138438091ed2a534682b55755a97f:latest'
             }
         }
     }
