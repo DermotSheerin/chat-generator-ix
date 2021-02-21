@@ -12,5 +12,11 @@ pipeline {
                 sh 'node --version'
             }
         }
+		
+		stage('Deploy') {
+            steps {
+                echo 'Deploying ....'
+            }
+        }
     }
 }
