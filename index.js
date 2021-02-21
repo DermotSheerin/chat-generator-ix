@@ -11,7 +11,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json(), cors());
 
 const port = 8000;
-const ip = "135.123.64.37";
+const ip = "10.134.45.26";
 
 const promiseMap = {};
 const engagementDetailsMap = {};
