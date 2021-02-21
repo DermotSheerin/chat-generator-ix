@@ -16,7 +16,7 @@ pipeline {
 		stage('Deploy') {
             steps {
                 echo 'Deploying ....'
-				sh 'node index.js'
+				sh 'node index.js &'
             }
         }
     }
