@@ -16,7 +16,7 @@ pipeline {
 		stage('Deploy') {
             steps {
                 echo 'Deploying ....'
-				sh 'nohup node index.js > output.log &'
+				sh 'docker build'
             }
         }
     }
