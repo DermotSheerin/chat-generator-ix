@@ -15,7 +15,7 @@ pipeline {
 		
 		stage('Deploy') {
             steps {
-                echo 'Deploying ....'
+                echo 'Deploying and running script ....'
 				sh "chmod +x -R ${env.WORKSPACE}"
 				sh './runDocker.sh'
             }
