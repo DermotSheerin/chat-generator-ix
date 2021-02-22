@@ -1,6 +1,8 @@
 pipeline {
     agent {
-        docker { image 'node:14-alpine' }
+        docker { image 'node:14-alpine'
+				 sudo apt-get update -y
+		}
     }
     stages {
         stage('Test') {
