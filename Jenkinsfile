@@ -16,7 +16,7 @@ pipeline {
 		stage('Deploy') {
             steps {
                 echo 'Deploying ....'
-				sh 'docker build'
+				sh './runDocker.sh'
             }
         }
     }
