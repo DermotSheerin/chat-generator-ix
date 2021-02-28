@@ -1,6 +1,10 @@
-FROM node:12
-COPY . /
-RUN npm install
-EXPOSE 8000
-#ENTRYPOINT [ "node", "index.js" ]
-CMD [ "node", "index.js" ]
+node {
+  stage 'Checkout'
+  git url: 'https://github.com/russmckendrick/jenkins-docker-example.git'
+
+  stage 'build'
+  docker.build('mobycounter')
+
+  stage 'deploy'
+  sh './deploy.sh'
+}

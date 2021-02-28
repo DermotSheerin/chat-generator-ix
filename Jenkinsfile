@@ -1,13 +1,10 @@
-pipeline {
-    agent {
-        docker { image 'node:14-alpine' }
-    }
-    stages {
-        stage('Test') {
-            steps {
-                sh 'node --version'
-				sh 'docker ps'
-            }
-        }
-    }
+node {
+  stage 'Checkout'
+  git url: 'https://github.com/russmckendrick/jenkins-docker-example.git'
+
+  stage 'build'
+  docker.build('mobycounter')
+
+  stage 'deploy'
+  sh './deploy.sh'
 }
