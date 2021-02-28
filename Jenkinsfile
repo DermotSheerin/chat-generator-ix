@@ -4,7 +4,8 @@ pipeline {
         stage('Test') {
             steps {
                 sh 'node --version'
-				docker ps
+				sh 'pwd'
+				sh 'ls -ltr'
             }
         }
     }
