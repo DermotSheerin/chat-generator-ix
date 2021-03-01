@@ -1,4 +1,4 @@
 #!/bin/bash
-docker kill mobycounter redis > /dev/null 2>&1
-docker rm mobycounter redis > /dev/null 2>&1
+docker kill chatgenerator > /dev/null 2>&1
+docker rm chatgenerator > /dev/null 2>&1
 docker-compose up -d

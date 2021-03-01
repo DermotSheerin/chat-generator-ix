@@ -1,17 +1,8 @@
-version: '2'
+version: '3.8'
 services:
-  mobycounter:
-    container_name: mobycounter
-    image: mobycounter
-    links:
-      - "redis:redis"
+  chatgenerator:
+    build: .
+    container_name: chatgenerator
+    image: chatgenerator
     ports: 
-      - "80:80"
-  redis:
-    container_name: redis
-    image: redis:alpine
-    volumes:
-      - "redis:/data"
-volumes:
-  redis:
-    driver: local
+      - "8000:8000"
