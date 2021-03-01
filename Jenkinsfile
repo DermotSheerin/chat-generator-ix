@@ -4,7 +4,7 @@ pipeline {
         stage('Test') {
             steps {
 				sh 'docker ps -a'
-				sh 'chmode 777 deploy.sh'
+				sh 'chmod 777 deploy.sh'
 				sh './deploy.sh'
             }
         }
