@@ -329,6 +329,12 @@ app.get("/startTest", (req, res) => {
     res.send(`******** Test Starting ********`);
 });
 
+//GET to start test
+app.get("/demoTest", (req, res) => {
+    logMessage(chalk.green("###### Demo of pipeline code added ######"));
+    res.send(`******** Demo Complete ********`);
+});
+
 // toggle test start/stop
 // app.post("/genStartStop/:testStart", (req, res) => {
 //   req.params.testStart === "true" ? (startLoop = true, startTest(), logMessage(chalk.green("###### Chat Generator Started ######")),
