@@ -1,11 +1,15 @@
 pipeline {
-    agent { dockerfile true }
+    agent any
     stages {
         stage('Test') {
             steps {
-				sh 'docker ps -a'
-				sh 'chmod 777 deploy.sh'
-				sh './deploy.sh'
+				echo 'In Test Stage ...nothing to test yet'
+            }
+        }
+		stage('Test') {
+            steps {
+				sh 'docker-compose build'
+				sh 'docker-compose up -d'
             }
         }
     }
