@@ -3,7 +3,7 @@ pipeline {
     stages {
         stage('Test') {
             steps {
-				sh 'docker.build('chatgenerator')'
+				docker.build('chatgenerator')
 				sh 'chmod 777 deploy.sh'
 				sh './deploy.sh'
             }
