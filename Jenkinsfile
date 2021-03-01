@@ -5,7 +5,9 @@ pipeline {
             steps {
 				sh 'docker ps -a'
 				sh 'chmod 777 deploy.sh'
-				sh './deploy.sh'
+				sh 'docker kill chatgenerator > /dev/null 2>&1'
+                sh 'docker rm chatgenerator > /dev/null 2>&1'
+                sh 'docker-compose up -d'
             }
         }
     }
