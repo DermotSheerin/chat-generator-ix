@@ -332,7 +332,7 @@ app.get("/startTest", (req, res) => {
 //GET to start test
 app.get("/demoTest", (req, res) => {
     logMessage(chalk.green("###### Demo of pipeline code added ######"));
-    res.send(`******** Demo Complete 2 ********`);
+    res.send(`******** Demo Complete 3 ********`);
 });
 
 // toggle test start/stop
