@@ -2,6 +2,6 @@ version: '3.3'
 services:
   chatgenerator:
     build: .
-    container_name: chatgenerator
+#    container_name: chatgenerator
     ports: 
       - "8000:8000"
