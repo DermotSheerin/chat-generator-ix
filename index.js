@@ -350,9 +350,9 @@ app.get("/demoTest", (req, res) => {
 // })
 
 let server = app.listen(port, function () {
-    let host = server.address().address;
+    //let host = server.address().address;
     //let port = server.address().port;
-
+    let host = '10.134.45.26'
 
     logMessage("Example app listening at http://localhost", host, port);
 });
