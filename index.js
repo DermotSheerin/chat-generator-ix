@@ -1,17 +1,57 @@
 const chatService = require("./services/chat-service");
 const chalk = require("chalk");
+
 const express = require("express");
+const http = require("http");
+const socketIo = require('socket.io');
 const bodyParser = require("body-parser");
 const app = express();
+//const index = require("./routes/index");
 const cors = require("cors");
+//app.use(index);
+app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.json(), cors());
+//working with this ---------------------
+const server = http.createServer(app);
+const io = socketIo(server, {
+    cors: {
+        origin: '*',
+    }});
+//--------------------------------------------
+
 const timeoutPromise = require("./timeout-promise");
 const moment = require("moment");
 
-app.use(bodyParser.urlencoded({extended: false}));
-app.use(bodyParser.json(), cors());
-
 const port = 8000;
 const ip = "10.134.45.26";
+
+
+/////////////////////////////
+let interval;
+
+io.on("connection", (socket) => {
+    console.log("New client connected");
+    if (interval) {
+        clearInterval(interval);
+    }
+    interval = setInterval(() => getApiAndEmit(socket), 1000);
+    socket.on("disconnect", () => {
+        console.log("Client disconnected");
+        clearInterval(interval);
+    });
+});
+
+const getApiAndEmit = socket => {
+    const response = new Date();
+    // Emitting a new message. Will be consumed by the client
+    socket.emit("FromAPI", response);
+};
+
+// works with this
+server.listen(port, () => console.log(`Listening on port ${port}`));
+
+/////////////////////////////
+
 
 const promiseMap = {};
 const engagementDetailsMap = {};
@@ -284,7 +324,10 @@ allEvents = (req, res) => {
     }
 };
 
-app.post("/allEvents", allEvents);
+//app.post("/allEvents", allEvents);
+app.get("/", (req, res) => {
+    res.send({response: "I am alive"}).status(200);
+});
 
 
 // set Chat Parameters
@@ -349,12 +392,12 @@ app.get("/demoTest", (req, res) => {
 //   res.send("******** createCustomerChatWorkFlow Triggered Manually ********")
 // })
 
-let server = app.listen(port, function () {
-    //let host = server.address().address;
-    //let port = server.address().port;
-    let host = '10.134.45.26'
-
-    logMessage("Example app listening at http://localhost", host, port);
-});
+// let server = app.listen(port, function () {
+//     //let host = server.address().address;
+//     //let port = server.address().port;
+//     let host = '10.134.45.26'
+//
+//     logMessage("Example app listening at http://localhost", host, port);
+// });
 
 
