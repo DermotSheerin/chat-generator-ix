@@ -26,7 +26,7 @@ const io = socketIo(server, {
 
 
 const port = 8000;
-const ip = "10.134.45.26";
+const ip = "135.123.73.56";
 
 
 /////////////////////////////
@@ -57,7 +57,7 @@ const getChatStats = socket => {
 };
 
 // works with this
-server.listen(port, () => console.log(`Listening on port ${port}`));
+server.listen(port, ip,() => console.log(`Listening on port ${port}`));
 
 /////////////////////////////
 
@@ -332,10 +332,10 @@ allEvents = (req, res) => {
     }
 };
 
-//app.post("/allEvents", allEvents);
-app.get("/", (req, res) => {
-    res.send({response: "I am alive"}).status(200);
-});
+app.post("/allEvents", allEvents);
+// app.get("/", (req, res) => {
+//     res.send({response: "I am alive"}).status(200);
+// });
 
 
 // set Chat Parameters
