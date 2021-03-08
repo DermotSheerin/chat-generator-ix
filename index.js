@@ -1,5 +1,7 @@
 const chatService = require("./services/chat-service");
 const chalk = require("chalk");
+const timeoutPromise = require("./timeout-promise");
+const moment = require("moment");
 
 const express = require("express");
 const http = require("http");
@@ -12,15 +14,16 @@ const cors = require("cors");
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json(), cors());
 //working with this ---------------------
+// reuse the HTTP server to run socket.io within the same HTTP server instance
 const server = http.createServer(app);
+
+//  call to socketIo() to initialize a new instance by passing in the server object and set origins option on the server side to allow cross-origin requests
 const io = socketIo(server, {
     cors: {
         origin: '*',
     }});
 //--------------------------------------------
 
-const timeoutPromise = require("./timeout-promise");
-const moment = require("moment");
 
 const port = 8000;
 const ip = "10.134.45.26";
@@ -29,19 +32,25 @@ const ip = "10.134.45.26";
 /////////////////////////////
 let interval;
 
+// using setInterval to emit the chatStats object every second
+// Socket.IO on() takes two arguments: the name of the event, in this case "connection",
+// and a callback which will be executed after every connection event. The connection event returns a socket object which will
+// be passed to the callback function. By using said socket you will be able to send data back to a client in real time.
 io.on("connection", (socket) => {
     console.log("New client connected");
     if (interval) {
         clearInterval(interval);
     }
-    interval = setInterval(() => getApiAndEmit(socket), 1000);
+    interval = setInterval(() => getChatStats(socket), 1000);
+
+    // clearing the interval on any new connection, and on disconnection to avoid flooding the server
     socket.on("disconnect", () => {
         console.log("Client disconnected");
         clearInterval(interval);
     });
 });
 
-const getApiAndEmit = socket => {
+const getChatStats = socket => {
     // const response = new Date();
     // Emitting a new message. Will be consumed by the client
     socket.emit("FromAPI", chatStatsMap);
@@ -51,7 +60,6 @@ const getApiAndEmit = socket => {
 server.listen(port, () => console.log(`Listening on port ${port}`));
 
 /////////////////////////////
-
 
 const promiseMap = {};
 const engagementDetailsMap = {};
