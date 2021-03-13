@@ -1,25 +1,19 @@
 const chatService = require("./services/chat-service");
 const chalk = require("chalk");
 const timeoutPromise = require("./timeout-promise");
-const moment = require("moment");
+const { logMessage, errorMessage } = require("./logger/logger");
+const fastify = require("./routes/index").fastify;
+
 
 const port = 8000;
-const ip = "135.123.64.37";
+const ip = "135.123.73.56";
 
-// Require Fastify framework and instantiate it
-const fastify = require("fastify")({logger: false});
-// fastify-cors enables the use of CORS in a Fastify application.
-fastify.register(require('fastify-cors'), {
-        origin: '*',
-        methods: ["POST"]
-    }
-);
 
 const promiseMap = {};
 const engagementDetailsMap = {};
 
 // initial chat stat values
-let chatStatsMap = {
+const chatStatsMap = {
     overallCallAttempts: [0, 0],
     webHookCreate: [0, 0],
     sessionCreate: [0, 0],
@@ -53,18 +47,10 @@ let delayBetweenLoops = 20000;
 // concurrent callers / loop controller
 let concurrentCallers = 1;
 
+
 const customerMsgText = "Here is chat message from Customer";
 const customerBye = "###BYE###";
 
-function logMessage(message) {
-    const now = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss.SSS");
-    console.log(now, message);
-}
-
-function errorMessage(message) {
-    const now = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss.SSS");
-    console.error(now, message);
-}
 
 wait = async (ms) => {
     try {
@@ -80,7 +66,7 @@ wait = async (ms) => {
 //startTest()
 
 
-async function startTest() {
+const startTest = async () => {
     // create webHook
     //getWebhook();
 
@@ -219,7 +205,7 @@ async function sendChat(engagementId, customerMsgText) {
     } else chatStatsMap["sendChat"][0]++;
 }
 
-function processAgentJoinEvent(engagementId) {
+const processAgentJoinEvent = (engagementId) => {
     logMessage(`Agent Join Received for engId: ${engagementId} `);
 
     // verify the engagementID is stored in the promiseMap before attempting to resolve
@@ -236,7 +222,7 @@ function processAgentJoinEvent(engagementId) {
     }
 }
 
-function processAgentSendMsgEvent(engagementId) {
+const processAgentSendMsgEvent = (engagementId) => {
     // if engId is in promiseMap then resolve the promise and increment the chatStats
     if (promiseMap[engagementId]) {
         (promiseMap[engagementId](true));
@@ -244,13 +230,39 @@ function processAgentSendMsgEvent(engagementId) {
     }
 }
 
-function processAgentDisconnectEvent(engagementId) {
+const processAgentDisconnectEvent = (engagementId) => {
     // deleting the engID from the map due to duplicate TERMINATES being sent from IX
     if (promiseMap[engagementId]) {
         delete promiseMap[engagementId];
         chatStatsMap["interactEnd"][0]++;
         logMessage(`Agent Terminated successfully engId: ${engagementId} chatStats: ${Object.entries(chatStatsMap)}`);
     }
+
+    // exports.allEvents = (req, res) => {
+    //     // Listen for Agent Join
+    //     if (req.body.eventType === "PARTICIPANT_ADDED" && req.body.participantType === "AGENT") {
+    //         res.sendStatus(200);
+    //         processAgentJoinEvent(req.body.engagementId);
+    //     }
+    //
+    //     // Listen for Agent Send Message
+    //     else if (req.body.senderType === "AGENT") {
+    //         res.sendStatus(200);
+    //
+    //         // after predefined delay respond to Agent message
+    //         setTimeout(() => {
+    //             processAgentSendMsgEvent(req.body.engagementId);
+    //         }, respondMsgDelay);
+    //     }
+    //
+    //     // Listen for Participant Disconnect
+    //     else if (req.body.eventType === "PARTICIPANT_DISCONNECTED") {
+    //         res.sendStatus(200);
+    //         processAgentDisconnectEvent(req.body.engagementId);
+    //     } else {
+    //         res.sendStatus(200);
+    //     }
+    // };
 
     // TEMP CODE TO RESTART LOOP
     // startLoop
@@ -260,103 +272,32 @@ function processAgentDisconnectEvent(engagementId) {
     //     logMessage(`######## Stopping Test ########`)));
 }
 
-allEvents = (request, reply) => {
-    // Listen for Agent Join
-    if (request.body.eventType === "PARTICIPANT_ADDED" && request.body.participantType === "AGENT") {
-        reply.code(200);
-        processAgentJoinEvent(request.body.engagementId);
-    }
+// module.exports = {
+//     concurrentCallers: concurrentCallers,
+//     chatSendMax: chatSendMax,
+//     firstMsgSendDelay: firstMsgSendDelay,
+//     respondMsgDelay: respondMsgDelay,
+//     delayBetweenLoops: delayBetweenLoops,
+//     agentJoinTimeout: agentJoinTimeout,
+//     chatStatsMap: chatStatsMap,
+//     startLoop: startLoop,
+//     startTest: startTest,
+//     processAgentJoinEvent: processAgentJoinEvent,
+//     processAgentSendMsgEvent: processAgentSendMsgEvent,
+//     processAgentDisconnectEvent: processAgentDisconnectEvent
+// }
 
-    // Listen for Agent Send Message
-    else if (request.body.senderType === "AGENT") {
-        reply.code(200);
+exports.concurrentCallers = concurrentCallers;
+exports.chatSendMax = chatSendMax;
+exports.firstMsgSendDelay = firstMsgSendDelay;
+exports.respondMsgDelay = respondMsgDelay;
+exports.delayBetweenLoops = delayBetweenLoops;
+exports.agentJoinTimeout = agentJoinTimeout;
+exports.chatStatsMap = chatStatsMap;
+exports.startLoop = startLoop;
+exports.startTest = startTest;
+exports.processAgentJoinEvent = processAgentJoinEvent;
+exports.processAgentSendMsgEvent = processAgentSendMsgEvent;
+exports.processAgentDisconnectEvent = processAgentDisconnectEvent;
 
-        // after predefined delay respond to Agent message
-        setTimeout(() => {
-            processAgentSendMsgEvent(request.body.engagementId);
-        }, respondMsgDelay);
-    }
-
-    // Listen for Participant Disconnect
-    else if (request.body.eventType === "PARTICIPANT_DISCONNECTED") {
-        reply.code(200);
-        processAgentDisconnectEvent(request.body.engagementId);
-    } else {
-        reply.code(200);
-    }
-};
-
-// fastify.get('/joey', (req, reply) => {
-//     reply.send("HHHHHHHHHHHHHHHHHHH")
-// })
-
-
-fastify.post("/allEvents", allEvents);
-
-// set Chat Parameters
-fastify.post("/changeChatParameters", (request, reply) => {
-    reply.code(200);
-    concurrentCallers = request.body.concurrentCallers;
-    chatSendMax = request.body.chatSendMax;
-    firstMsgSendDelay = request.body.firstMsgSendDelay;
-    respondMsgDelay = request.body.respondMsgDelay;
-    delayBetweenLoops = request.body.delayBetweenLoops;
-    agentJoinTimeout = request.body.agentJoinTimeout;
-});
-
-// retrieve Chat Parameters
-fastify.get("/getChatParameters", (request, reply) => {
-    reply.send({
-        concurrentCallers: concurrentCallers,
-        chatSendMax: chatSendMax,
-        firstMsgSendDelay: firstMsgSendDelay,
-        respondMsgDelay: respondMsgDelay,
-        delayBetweenLoops: delayBetweenLoops,
-        agentJoinTimeout: agentJoinTimeout,
-    });
-});
-
-// GET to retrieve the chatStatsMap details
-fastify.get("/getStats", (request, reply) => {
-    reply.send(chatStatsMap);
-});
-
-//GET to stop test gradually
-fastify.get("/stopTest", (request, reply) => {
-    startLoop = false;
-    reply.send(`******** Test will terminate gracefully ********`);
-});
-
-//GET to start test
-fastify.get("/startTest", (request, reply) => {
-    //startLoop = true;
-    startTest();
-    logMessage(chalk.green("###### Chat Generator Started ######"));
-    reply.send(`******** Test Starting ********`);
-});
-
-// toggle test start/stop
-// app.post("/genStartStop/:testStart", (req, res) => {
-//   req.params.testStart === "true" ? (startLoop = true, startTest(), logMessage(chalk.green("###### Chat Generator Started ######")),
-//   res.send(`******** Test Starting ********`))
-//   :
-//   (startLoop = false, logMessage(chalk.green("******** Test will terminate gracefully ********"), res.send(`******** Test will terminate gracefully ********`)))
-// })
-
-// GET request to trigger chat generator to start
-// app.get("/startGen", (req, res) => {
-//   createCustomerChatWorkFlow('Post-Start-Test')
-//   res.send("******** createCustomerChatWorkFlow Triggered Manually ********")
-// })
-
-// Run the server!
-fastify.listen(port, ip, (err, address) => {
-    if (err) {
-        fastify.log.error(err)
-        process.exit(1)
-    }
-    logMessage(`Fastify listening on: ${ip}:${port}`);
-})
-
-
-
+fastify.listen(port, ip,() => logMessage(`Listening on IP: ${ip}: port ${port}`));
