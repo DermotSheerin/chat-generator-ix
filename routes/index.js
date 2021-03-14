@@ -1,7 +1,3 @@
-// const { chatStatsMap, concurrentCallers,
-//     chatSendMax, firstMsgSendDelay, respondMsgDelay, delayBetweenLoops, agentJoinTimeout,
-//     startTest, startLoop, processAgentJoinEvent, processAgentSendMsgEvent, processAgentDisconnectEvent  } = require("../index.js");
-
 const index = require("../index.js");
 const { logMessage } = require("../logger/logger");
 const express = require("express");
@@ -66,7 +62,7 @@ app.post("/allEvents", (req, res) => {
         // after predefined delay respond to Agent message
         setTimeout(() => {
             index.processAgentSendMsgEvent(req.body.engagementId);
-        }, index.respondMsgDelay);
+        }, index.chatParameters.respondMsgDelay);
     }
 
     // Listen for Participant Disconnect
@@ -82,34 +78,36 @@ app.post("/allEvents", (req, res) => {
 // set Chat Parameters
 app.post("/changeChatParameters", (req, res) => {
     res.sendStatus(200);
-    index.concurrentCallers = req.body.concurrentCallers;
-    index.chatSendMax = req.body.chatSendMax;
-    index.firstMsgSendDelay = req.body.firstMsgSendDelay;
-    index.respondMsgDelay = req.body.respondMsgDelay;
-    index.delayBetweenLoops = req.body.delayBetweenLoops;
-    index.agentJoinTimeout = req.body.agentJoinTimeout;
+    logMessage(`received chatParameters, concurrentCallers: ${req.body.concurrentCallers}`)
+    index.chatParameters.concurrentCallers = Number(req.body.concurrentCallers);
+    logMessage(`concurrentCallers post, concurrentCallers: ${req.body.concurrentCallers} and in index: ${index.chatParameters.concurrentCallers}`)
+    index.chatParameters.chatSendMax = req.body.chatSendMax;
+    index.chatParameters.firstMsgSendDelay = req.body.firstMsgSendDelay;
+    index.chatParameters.respondMsgDelay = req.body.respondMsgDelay;
+    index.chatParameters.delayBetweenLoops = req.body.delayBetweenLoops;
+    index.chatParameters.agentJoinTimeout = req.body.agentJoinTimeout;
 });
 
 // retrieve Chat Parameters
 app.get("/getChatParameters", (req, res) => {
     res.send({
-        concurrentCallers: index.concurrentCallers,
-        chatSendMax: index.chatSendMax,
-        firstMsgSendDelay: index.firstMsgSendDelay,
-        respondMsgDelay: index.respondMsgDelay,
-        delayBetweenLoops: index.delayBetweenLoops,
-        agentJoinTimeout: index.agentJoinTimeout,
+        concurrentCallers: index.chatParameters.concurrentCallers,
+        chatSendMax: index.chatParameters.chatSendMax,
+        firstMsgSendDelay: index.chatParameters.firstMsgSendDelay,
+        respondMsgDelay: index.chatParameters.respondMsgDelay,
+        delayBetweenLoops: index.chatParameters.delayBetweenLoops,
+        agentJoinTimeout: index.chatParameters.agentJoinTimeout,
     });
 });
 
 // GET to retrieve the chatStatsMap details
 app.get("/getStats", (req, res) => {
-    res.send(index.chatStatsMap);
+    res.send(index.chatParameters.chatStatsMap);
 });
 
 //GET to stop test gradually
 app.get("/stopTest", (req, res) => {
-    index.startLoop = false;
+    index.chatParameters.startLoop = false;
     res.send(`******** Test will terminate gracefully ********`);
 });
 
@@ -124,7 +122,7 @@ app.get("/startTest", (req, res) => {
 //GET to start test
 app.get("/demoTest", (req, res) => {
     logMessage(chalk.green("###### Demo of pipeline code added ######"));
-    logMessage(`Here is agentJoinTimeout ${index.agentJoinTimeout}`)
+    logMessage(`Here is agentJoinTimeout ${index.chatParameters.agentJoinTimeout}`)
     res.send(`******** Demo Complete 4 ********`);
 });
 
