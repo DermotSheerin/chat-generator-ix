@@ -72,23 +72,23 @@ fastify.post("/allEvents", (request, reply) => {
 fastify.post("/changeChatParameters", (request, reply) => {
     reply.code(200);;
     logMessage(`received chatParameters, concurrentCallers: ${request.body.concurrentCallers}`)
-    index.concurrentCallers = request.body.concurrentCallers;
-    index.chatSendMax = request.body.chatSendMax;
-    index.firstMsgSendDelay = request.body.firstMsgSendDelay;
-    index.respondMsgDelay = request.body.respondMsgDelay;
-    index.delayBetweenLoops = request.body.delayBetweenLoops;
-    index.agentJoinTimeout = request.body.agentJoinTimeout;
+    index.chatParameters.concurrentCallers = request.body.concurrentCallers;
+    index.chatParameters.chatSendMax = request.body.chatSendMax;
+    index.chatParameters.firstMsgSendDelay = request.body.firstMsgSendDelay;
+    index.chatParameters.respondMsgDelay = request.body.respondMsgDelay;
+    index.chatParameters.delayBetweenLoops = request.body.delayBetweenLoops;
+    index.chatParameters.agentJoinTimeout = request.body.agentJoinTimeout;
 });
 
 // retrieve Chat Parameters
 fastify.get("/getChatParameters", (request, reply) => {
     reply.send({
-        concurrentCallers: index.concurrentCallers,
-        chatSendMax: index.chatSendMax,
-        firstMsgSendDelay: index.firstMsgSendDelay,
-        respondMsgDelay: index.respondMsgDelay,
-        delayBetweenLoops: index.delayBetweenLoops,
-        agentJoinTimeout: index.agentJoinTimeout,
+        concurrentCallers: index.chatParameters.concurrentCallers,
+        chatSendMax: index.chatParameters.chatSendMax,
+        firstMsgSendDelay: index.chatParameters.firstMsgSendDelay,
+        respondMsgDelay: index.chatParameters.respondMsgDelay,
+        delayBetweenLoops: index.chatParameters.delayBetweenLoops,
+        agentJoinTimeout: index.chatParameters.agentJoinTimeout,
     });
 });
 
@@ -99,7 +99,7 @@ fastify.get("/getStats", (request, reply) => {
 
 //GET to stop test gradually
 fastify.get("/stopTest", (request, reply) => {
-    index.startLoop = false;
+    index.chatParameters.startLoop = false;
     reply.send(`******** Test will terminate gracefully ********`);
 });
 
@@ -114,7 +114,7 @@ fastify.get("/startTest", (request, reply) => {
 //GET to start test
 fastify.get("/demoTest", (request, reply) => {
     logMessage(chalk.green("###### Demo of pipeline code added ######"));
-    logMessage(`Here is agentJoinTimeout ${index.agentJoinTimeout}`)
+    logMessage(`Here is agentJoinTimeout ${index.chatParameters.gentJoinTimeout}`)
     reply.send(`******** Demo Complete 4 ********`);
 });
 
