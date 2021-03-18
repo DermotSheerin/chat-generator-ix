@@ -4,4 +4,4 @@ services:
     build: .
     container_name: chatgenerator
     ports: 
-      - "8000:8000"
+      - "8001:8001"
