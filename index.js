@@ -1,23 +1,19 @@
 const chatService = require("./services/chat-service");
 const chalk = require("chalk");
-const express = require("express");
-const bodyParser = require("body-parser");
-const app = express();
-const cors = require("cors");
 const timeoutPromise = require("./timeout-promise");
-const moment = require("moment");
-
-app.use(bodyParser.urlencoded({extended: false}));
-app.use(bodyParser.json(), cors());
+const { logMessage, errorMessage } = require("./logger/logger");
+const server = require("./routes/index").server;
 
 const port = 8000;
 const ip = "10.134.45.26";
 
+
 const promiseMap = {};
 const engagementDetailsMap = {};
 
+
 // initial chat stat values
-let chatStatsMap = {
+const chatStatsMap = {
     overallCallAttempts: [0, 0],
     webHookCreate: [0, 0],
     sessionCreate: [0, 0],
@@ -30,39 +26,19 @@ let chatStatsMap = {
 
 let webhookId = "";
 
-// stop Loop using express server request
-let startLoop = false;
-
-// agent JOIN timeout value (ms)
-let agentJoinTimeout = 20000;
-
-// max messages each user will send
-let chatSendMax = 2; // NOTE could add random here
-
-// time to wait before customer sends first message (ms)
-let firstMsgSendDelay = 5000;
-
-// delay between customer responding to agent chat messages (sec)
-let respondMsgDelay = 5000; // NOTE could add random here
-
-// delay between loops (ms)
-let delayBetweenLoops = 20000;
-
-// concurrent callers / loop controller
-let concurrentCallers = 1;
+const chatParameters = {
+    startLoop: false,
+    agentJoinTimeout: 20000,
+    chatSendMax: 2,
+    firstMsgSendDelay: 5000,
+    respondMsgDelay: 5000,
+    delayBetweenLoops: 20000,
+    concurrentCallers: 1
+}
 
 const customerMsgText = "Here is chat message from Customer";
 const customerBye = "###BYE###";
 
-function logMessage(message) {
-    const now = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss.SSS");
-    console.log(now, message);
-}
-
-function errorMessage(message) {
-    const now = moment(Date.now()).format("YYYY-MM-DD HH:mm:ss.SSS");
-    console.error(now, message);
-}
 
 wait = async (ms) => {
     try {
@@ -78,17 +54,17 @@ wait = async (ms) => {
 //startTest()
 
 
-async function startTest() {
+const startTest = async () => {
     // create webHook
     //getWebhook();
 
     let i = 0;
     let displayName = "Dermot";
 
-    for (i = 0; i < concurrentCallers; i++) {
+    for (i = 0; i < chatParameters.concurrentCallers; i++) {
         createCustomerChatWorkFlow(displayName + i);
         await wait(i * 0.02);
-        logMessage(`Running createChatSession - (${displayName + i})`);
+        logMessage(`Running createChatSession - (${displayName + i} and concurrentCallers: ${chatParameters.concurrentCallers})`);
     }
 
     // while (i < concurrentCallers) {
@@ -139,20 +115,20 @@ async function createCustomerChatWorkFlow(displayName) {
     logMessage(`Wait for promise to be resolved for agent join, engId: ${engagementDetails.engagementId}`);
 
     // promise timer for Agent Join
-    let agentJoinTimer = await timeoutPromise(agentJoinTimeout, promiseAgentJoin);
+    let agentJoinTimer = await timeoutPromise(chatParameters.agentJoinTimeout, promiseAgentJoin);
 
     if (!agentJoinTimer) {
-        errorMessage(`Agent JOIN Timed out or Agent did not answer in ${agentJoinTimeout} ms !!! for engID: ${engagementDetails.engagementId}, promiseAgentJoin: ${await promiseAgentJoin}, agentJoinTimer returned: ${agentJoinTimer}`);
+        errorMessage(`Agent JOIN Timed out or Agent did not answer in ${chatParameters.agentJoinTimeout} ms !!! for engID: ${engagementDetails.engagementId}, promiseAgentJoin: ${await promiseAgentJoin}, agentJoinTimer returned: ${agentJoinTimer}`);
         chatStatsMap["agtJoin"][1]++;
         return
     }
 
     // wait before sending a chat message to Agent
-    await wait(firstMsgSendDelay);
+    await wait(chatParameters.firstMsgSendDelay);
 
     // send chat loop
     let chatCounter = engagementDetailsMap[engagementDetails.engagementId].chatCounter;
-    while (chatCounter < chatSendMax) {
+    while (chatCounter < chatParameters.chatSendMax) {
         await sendChat(engagementDetails.engagementId, customerMsgText);
         await waitForAgentMsgPromise(engagementDetails.engagementId);
         chatCounter++;
@@ -217,7 +193,7 @@ async function sendChat(engagementId, customerMsgText) {
     } else chatStatsMap["sendChat"][0]++;
 }
 
-function processAgentJoinEvent(engagementId) {
+const processAgentJoinEvent = (engagementId) => {
     logMessage(`Agent Join Received for engId: ${engagementId} `);
 
     // verify the engagementID is stored in the promiseMap before attempting to resolve
@@ -234,7 +210,7 @@ function processAgentJoinEvent(engagementId) {
     }
 }
 
-function processAgentSendMsgEvent(engagementId) {
+const processAgentSendMsgEvent = (engagementId) => {
     // if engId is in promiseMap then resolve the promise and increment the chatStats
     if (promiseMap[engagementId]) {
         (promiseMap[engagementId](true));
@@ -242,7 +218,7 @@ function processAgentSendMsgEvent(engagementId) {
     }
 }
 
-function processAgentDisconnectEvent(engagementId) {
+const processAgentDisconnectEvent = (engagementId) => {
     // deleting the engID from the map due to duplicate TERMINATES being sent from IX
     if (promiseMap[engagementId]) {
         delete promiseMap[engagementId];
@@ -258,103 +234,11 @@ function processAgentDisconnectEvent(engagementId) {
     //     logMessage(`######## Stopping Test ########`)));
 }
 
-allEvents = (req, res) => {
-    // Listen for Agent Join
-    if (req.body.eventType === "PARTICIPANT_ADDED" && req.body.participantType === "AGENT") {
-        res.sendStatus(200);
-        processAgentJoinEvent(req.body.engagementId);
-    }
+exports.chatParameters = chatParameters;
+exports.chatStatsMap = chatStatsMap;
+exports.startTest = startTest;
+exports.processAgentJoinEvent = processAgentJoinEvent;
+exports.processAgentSendMsgEvent = processAgentSendMsgEvent;
+exports.processAgentDisconnectEvent = processAgentDisconnectEvent;
 
-    // Listen for Agent Send Message
-    else if (req.body.senderType === "AGENT") {
-        res.sendStatus(200);
-
-        // after predefined delay respond to Agent message
-        setTimeout(() => {
-            processAgentSendMsgEvent(req.body.engagementId);
-        }, respondMsgDelay);
-    }
-
-    // Listen for Participant Disconnect
-    else if (req.body.eventType === "PARTICIPANT_DISCONNECTED") {
-        res.sendStatus(200);
-        processAgentDisconnectEvent(req.body.engagementId);
-    } else {
-        res.sendStatus(200);
-    }
-};
-
-app.post("/allEvents", allEvents);
-
-
-// set Chat Parameters
-app.post("/changeChatParameters", (req, res) => {
-    res.sendStatus(200);
-    concurrentCallers = req.body.concurrentCallers;
-    chatSendMax = req.body.chatSendMax;
-    firstMsgSendDelay = req.body.firstMsgSendDelay;
-    respondMsgDelay = req.body.respondMsgDelay;
-    delayBetweenLoops = req.body.delayBetweenLoops;
-    agentJoinTimeout = req.body.agentJoinTimeout;
-});
-
-// retrieve Chat Parameters
-app.get("/getChatParameters", (req, res) => {
-    res.send({
-        concurrentCallers: concurrentCallers,
-        chatSendMax: chatSendMax,
-        firstMsgSendDelay: firstMsgSendDelay,
-        respondMsgDelay: respondMsgDelay,
-        delayBetweenLoops: delayBetweenLoops,
-        agentJoinTimeout: agentJoinTimeout,
-    });
-});
-
-// GET to retrieve the chatStatsMap details
-app.get("/getStats", (req, res) => {
-    res.send(chatStatsMap);
-});
-
-//GET to stop test gradually
-app.get("/stopTest", (req, res) => {
-    startLoop = false;
-    res.send(`******** Test will terminate gracefully ********`);
-});
-
-//GET to start test
-app.get("/startTest", (req, res) => {
-    //startLoop = true;
-    startTest();
-    logMessage(chalk.green("###### Chat Generator Started ######"));
-    res.send(`******** Test Starting ********`);
-});
-
-//GET to start test
-app.get("/demoTest", (req, res) => {
-    logMessage(chalk.green("###### Demo of pipeline code added ######"));
-    res.send(`******** Demo Complete 4 ********`);
-});
-
-// toggle test start/stop
-// app.post("/genStartStop/:testStart", (req, res) => {
-//   req.params.testStart === "true" ? (startLoop = true, startTest(), logMessage(chalk.green("###### Chat Generator Started ######")),
-//   res.send(`******** Test Starting ********`))
-//   :
-//   (startLoop = false, logMessage(chalk.green("******** Test will terminate gracefully ********"), res.send(`******** Test will terminate gracefully ********`)))
-// })
-
-// GET request to trigger chat generator to start
-// app.get("/startGen", (req, res) => {
-//   createCustomerChatWorkFlow('Post-Start-Test')
-//   res.send("******** createCustomerChatWorkFlow Triggered Manually ********")
-// })
-
-let server = app.listen(port, function () {
-    //let host = server.address().address;
-    //let port = server.address().port;
-    let host = '10.134.45.26'
-
-    logMessage("Example app listening at http://localhost", host, port);
-});
-
-
+server.listen(port, ip,() => logMessage(`Listening on IP: ${ip}: port ${port}`));
