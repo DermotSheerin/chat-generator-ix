@@ -2,7 +2,6 @@ const index = require("../index.js");
 const { logMessage } = require("../logger/logger");
 const express = require("express");
 const chalk = require("chalk");
-const moment = require("moment");
 const http = require("http");
 const socketIo = require('socket.io');
 const bodyParser = require("body-parser");
@@ -11,6 +10,8 @@ const cors = require("cors");
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json(), cors());
 let interval;
+
+const utils = require("../utilities/os-utils.js");
 
 
 // reuse the HTTP server to run socket.io within the same HTTP server instance
@@ -42,9 +43,17 @@ io.on("connection", (socket) => {
 });
 
 const getChatStats = socket => {
-    // const response = new Date();
     // Emitting a new message. Will be consumed by the client
-    socket.emit("FromAPI", index.chatStatsMap);
+    const usedMem = utils.usedMem();
+    const cpuTime = utils.cpuTime();
+    socket.emit("FromAPI",
+        {
+            chatStatsMap: index.chatStatsMap,
+            resourceStats: {
+                usedMem: `${usedMem} MB`,
+                userTime: `${cpuTime.userTime} secs`,
+                systemTime: `${cpuTime.systemTime} secs` },
+        });
 };
 
 

@@ -4,9 +4,8 @@ const timeoutPromise = require("./timeout-promise");
 const { logMessage, errorMessage } = require("./logger/logger");
 const server = require("./routes/index").server;
 
-
 const port = 8000;
-const ip = "135.123.73.56";
+const ip = "10.134.45.26";
 
 
 const promiseMap = {};
