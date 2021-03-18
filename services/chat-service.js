@@ -8,8 +8,8 @@ const moment = require("moment");
 // const tenantId = "WKABCK";
 // const IX_CLUSTER_IP = "10.134.47.235";
 
-//const callBackURL = "http://135.123.64.157:" + port + "/allEvents";
-//const tenantId = "WKABCK";
+const callBackURL = "http://135.123.64.157:" + port + "/allEvents";
+const tenantId = "WKABCK";
 //const IX_CLUSTER_IP = `${ip}:${sutPort}`;
 const IX_CLUSTER_IP = '10.134.45.26:4000';
 
