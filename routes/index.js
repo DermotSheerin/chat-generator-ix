@@ -1,6 +1,7 @@
 const index = require("../index.js");
 const { logMessage } = require("../logger/logger");
 const chalk = require("chalk");
+const utils = require("../utilities/os-utils.js");
 
 const fastify = require('fastify')();
 // fastify-cors enables the use of CORS in a Fastify application.
@@ -36,9 +37,17 @@ socketIo.on('connection', (socket) => {
 })
 
 const getChatStats = socket => {
-    // const response = new Date();
     // Emitting a new message. Will be consumed by the client
-    socket.emit("FromAPI", index.chatStatsMap);
+    const usedMem = utils.usedMem();
+    const cpuTime = utils.cpuTime();
+    socket.emit("FromAPI",
+        {
+            chatStatsMap: index.chatStatsMap,
+            resourceStats: {
+                usedMem: `${usedMem} MB`,
+                userTime: `${cpuTime.userTime} secs`,
+                systemTime: `${cpuTime.systemTime} secs` },
+        });
 };
 
 fastify.post("/allEvents", (request, reply) => {

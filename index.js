@@ -5,8 +5,9 @@ const { logMessage, errorMessage } = require("./logger/logger");
 const fastify = require("./routes/index").fastify;
 
 
-const port = 8000;
-const ip = "135.123.73.56";
+const port = 8001;
+const ip = "0.0.0.0";
+const sutPort = 4000;
 
 
 const promiseMap = {};
