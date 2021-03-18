@@ -10,7 +10,8 @@ const moment = require("moment");
 
 const callBackURL = "http://135.123.64.157:" + port + "/allEvents";
 const tenantId = "WKABCK";
-const IX_CLUSTER_IP = `${ip}:${sutPort}`;
+//const IX_CLUSTER_IP = `${ip}:${sutPort}`;
+const IX_CLUSTER_IP = '10.134.45.26:4000';
 
 // https://codingwithspike.wordpress.com/2018/03/10/making-settimeout-an-async-await-function/
 // Making setTimeout an async/await function
