@@ -6,6 +6,7 @@ const server = require("./routes/index").server;
 
 const port = 8000;
 const ip = "10.134.45.26";
+const sutPort = 4000;
 
 
 const promiseMap = {};
@@ -240,5 +241,8 @@ exports.startTest = startTest;
 exports.processAgentJoinEvent = processAgentJoinEvent;
 exports.processAgentSendMsgEvent = processAgentSendMsgEvent;
 exports.processAgentDisconnectEvent = processAgentDisconnectEvent;
+exports.ip = ip;
+exports.port = port;
+exports.sutPort = sutPort;
 
 server.listen(port, ip,() => logMessage(`Listening on IP: ${ip}: port ${port}`));
