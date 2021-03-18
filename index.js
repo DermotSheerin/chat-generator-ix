@@ -5,7 +5,7 @@ const { logMessage, errorMessage } = require("./logger/logger");
 const server = require("./routes/index").server;
 
 const port = 8001;
-const ip = "127.0.0.1";
+const ip = "0.0.0.0";
 const sutPort = 4000;
 
 
