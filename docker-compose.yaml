@@ -1,0 +1,7 @@
+version: '3.3'
+services:
+  chatgenerator:
+    build: .
+    container_name: chatgenerator
+    ports: 
+      - "8001:8001"
