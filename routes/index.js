@@ -135,6 +135,6 @@ app.get("/demoTest", (req, res) => {
     res.send(`******** Demo Complete 4 ********`);
 });
 
-module.exports.app = app;
+module.exports.server = server;
 
 

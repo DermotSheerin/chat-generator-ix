@@ -2,10 +2,10 @@ const chatService = require("./services/chat-service");
 const chalk = require("chalk");
 const timeoutPromise = require("./timeout-promise");
 const { logMessage, errorMessage } = require("./logger/logger");
-const app = require("./routes/index").app;
+const server = require("./routes/index").server;
 
 const port = 8001;
-const ip = "10.134.45.26";
+const ip = "127.0.0.1";
 const sutPort = 4000;
 
 
@@ -245,4 +245,4 @@ exports.ip = ip;
 exports.port = port;
 exports.sutPort = sutPort;
 
-app.listen(port, ip,() => logMessage(`Listening on IP: ${ip}: port ${port}`));
+server.listen(port, ip,() => logMessage(`Listening on IP: ${ip}: port ${port}`));
