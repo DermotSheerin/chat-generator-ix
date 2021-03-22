@@ -5,7 +5,8 @@ const { logMessage, errorMessage } = require("./logger/logger");
 const server = require("./routes/index").server;
 
 const port = 8001;
-const ip = "0.0.0.0";
+// ip = "0.0.0.0";
+const ip = "135.123.64.3";
 const sutPort = 4000;
 
 
@@ -28,7 +29,7 @@ const chatStatsMap = {
 let webhookId = "";
 
 const chatParameters = {
-    startLoop: false,
+    stopTest: false,
     agentJoinTimeout: 20000,
     chatSendMax: 2,
     firstMsgSendDelay: 5000,
@@ -61,8 +62,13 @@ const startTest = async () => {
 
     let i = 0;
     let displayName = "Dermot";
+    chatParameters.stopTest = false;
 
     for (i = 0; i < chatParameters.concurrentCallers; i++) {
+        if (chatParameters.stopTest) {
+            logMessage(`******** Test will terminate gracefully ********`)
+            break;
+        }
         createCustomerChatWorkFlow(displayName + i);
         await wait(i * 0.02);
         logMessage(`Running createChatSession - (${displayName + i} and concurrentCallers: ${chatParameters.concurrentCallers})`);

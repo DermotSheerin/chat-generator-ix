@@ -10,6 +10,7 @@ const cors = require("cors");
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json(), cors());
 let interval;
+let maxValues;
 
 const utils = require("../utilities/os-utils.js");
 
@@ -46,13 +47,17 @@ const getChatStats = socket => {
     // Emitting a new message. Will be consumed by the client
     const usedMem = utils.usedMem();
     const cpuTime = utils.cpuTime();
+
+    maxValues = utils.getMaxValues(usedMem, cpuTime.userTime, cpuTime.systemTime);
+
     socket.emit("FromAPI",
         {
             chatStatsMap: index.chatStatsMap,
             resourceStats: {
-                usedMem: `${usedMem} MB`,
-                userTime: `${cpuTime.userTime} secs`,
-                systemTime: `${cpuTime.systemTime} secs` },
+                usedMem: [`${usedMem} MB`, maxValues.maxMem],
+                userTime: [`${cpuTime.userTime} secs`, maxValues.maxUserTime],
+                systemTime: [`${cpuTime.systemTime} secs`, maxValues.maxSystemTime ]
+            },
         });
 };
 
@@ -116,8 +121,8 @@ app.get("/getStats", (req, res) => {
 
 //GET to stop test gradually
 app.get("/stopTest", (req, res) => {
-    index.chatParameters.startLoop = false;
-    res.send(`******** Test will terminate gracefully ********`);
+    index.chatParameters.stopTest = true;
+    //res.send(`******** Test will terminate gracefully ********`);
 });
 
 //GET to start test
