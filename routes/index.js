@@ -18,6 +18,7 @@ const utils = require("../utilities/os-utils.js");
 // reuse the HTTP server to run socket.io within the same HTTP server instance
 const server = http.createServer(app);
 
+
 //  call to socketIo() to initialize a new instance by passing in the server object and set origins
 //  option on the server side to allow cross-origin requests
 const io = socketIo(server, {
@@ -50,9 +51,11 @@ const getChatStats = socket => {
 
     maxValues = utils.getMaxValues(usedMem, cpuTime.userTime, cpuTime.systemTime);
 
+    let tick = 0;
     socket.emit("FromAPI",
         {
             chatStatsMap: index.chatStatsMap,
+            usedMemGraph: {name: utils.currentTime(), value: usedMem},
             resourceStats: {
                 usedMem: [`${usedMem} MB`, maxValues.maxMem],
                 userTime: [`${cpuTime.userTime} secs`, maxValues.maxUserTime],

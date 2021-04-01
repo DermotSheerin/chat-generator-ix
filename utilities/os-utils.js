@@ -21,6 +21,12 @@ let maxMem = 0;
 let maxUserTime = 0;
 let maxSystemTime = 0;
 
+// get current time
+const currentTime = () => {
+    let currentTime = new Date().toLocaleTimeString();
+    return currentTime
+}
+
 const usedMem = () => {
     const used = process.memoryUsage().heapUsed / 1024 / 1024;
     return Math.round(used * 100) / 100
@@ -51,6 +57,7 @@ const getMaxValues = (usedMem, userTime, systemTime) => {
 //     return this.maxValue
 // }
 
+module.exports.currentTime = currentTime;
 module.exports.usedMem = usedMem;
 module.exports.cpuTime = cpuTime;
 module.exports.getMaxValues = getMaxValues;

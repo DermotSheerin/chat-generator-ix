@@ -6,7 +6,7 @@ const server = require("./routes/index").server;
 
 const port = 8001;
 // ip = "0.0.0.0";
-const ip = "135.123.64.3";
+const ip = "135.123.64.43";
 const sutPort = 4000;
 
 
