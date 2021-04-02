@@ -11,6 +11,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json(), cors());
 let interval;
 let maxValues;
+let eventCounter = 0;
 
 const utils = require("../utilities/os-utils.js");
 
@@ -51,10 +52,11 @@ const getChatStats = socket => {
 
     maxValues = utils.getMaxValues(usedMem, cpuTime.userTime, cpuTime.systemTime);
 
-    let tick = 0;
     socket.emit("FromAPI",
         {
             chatStatsMap: index.chatStatsMap,
+            eventCounter: eventCounter,
+            testTime: { startTime: index.chatParameters.startTime, stopTime: index.chatParameters.stopTime },
             usedMemGraph: {name: utils.currentTime(), value: usedMem},
             resourceStats: {
                 usedMem: [`${usedMem} MB`, maxValues.maxMem],
@@ -66,6 +68,8 @@ const getChatStats = socket => {
 
 
 app.post("/allEvents", (req, res) => {
+    // increment event counter to track number of events received
+    eventCounter ++;
     // Listen for Agent Join
     if (req.body.eventType === "PARTICIPANT_ADDED" && req.body.participantType === "AGENT") {
         res.sendStatus(200);

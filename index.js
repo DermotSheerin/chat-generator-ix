@@ -3,15 +3,16 @@ const chalk = require("chalk");
 const timeoutPromise = require("./timeout-promise");
 const { logMessage, errorMessage } = require("./logger/logger");
 const server = require("./routes/index").server;
+const utils = require("./utilities/os-utils.js");
 
 const port = 8001;
 // ip = "0.0.0.0";
 const ip = "135.123.64.43";
 const sutPort = 4000;
 
-
 const promiseMap = {};
 const engagementDetailsMap = {};
+
 
 
 // initial chat stat values
@@ -30,6 +31,8 @@ let webhookId = "";
 
 const chatParameters = {
     stopTest: false,
+    startTime: "",
+    stopTime: "",
     agentJoinTimeout: 20000,
     chatSendMax: 2,
     firstMsgSendDelay: 5000,
@@ -63,16 +66,28 @@ const startTest = async () => {
     let i = 0;
     let displayName = "Dermot";
     chatParameters.stopTest = false;
+    chatParameters.startTime = utils.currentTime();
+
+    // if (chatParameters.framework === "Express") {
+    //     server = require("./routes/index").server;
+    //     logMessage(`Using Express`);
+    // } else {
+    //     server = require("./routes/indexFastify").server;
+    //     logMessage(`Using Fastify`);
+    // }
+
 
     for (i = 0; i < chatParameters.concurrentCallers; i++) {
         if (chatParameters.stopTest) {
-            logMessage(`******** Test will terminate gracefully ********`)
+            logMessage(`******** Test will terminate gracefully ********`);
+            chatParameters.stopTime = utils.currentTime();
             break;
         }
         createCustomerChatWorkFlow(displayName + i);
         await wait(i * 0.02);
         logMessage(`Running createChatSession - (${displayName + i} and concurrentCallers: ${chatParameters.concurrentCallers})`);
     }
+    chatParameters.stopTime = utils.currentTime();
 
     // while (i < concurrentCallers) {
     //   createCustomerChatWorkFlow(displayName + i);
