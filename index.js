@@ -7,7 +7,7 @@ const utils = require("./utilities/os-utils.js");
 
 const port = 8001;
 // ip = "0.0.0.0";
-const ip = "135.123.64.43";
+const ip = "135.123.64.236";
 const sutPort = 4000;
 
 const promiseMap = {};
@@ -131,16 +131,24 @@ async function createCustomerChatWorkFlow(displayName) {
 
 
     // create Promise for agent join
-    const promiseAgentJoin = new Promise((resolve) => {
-        promiseMap[engagementDetails.engagementId] = resolve;
-    });
+    // const promiseAgentJoin = new Promise((resolve) => {
+    //     promiseMap[engagementDetails.engagementId] = resolve;
+    // });
     logMessage(`Wait for promise to be resolved for agent join, engId: ${engagementDetails.engagementId}`);
 
     // promise timer for Agent Join
-    let agentJoinTimer = await timeoutPromise(chatParameters.agentJoinTimeout, promiseAgentJoin);
+    //let agentJoinTimer = await timeoutPromise(chatParameters.agentJoinTimeout, promiseAgentJoin);
 
-    if (!agentJoinTimer) {
-        errorMessage(`Agent JOIN Timed out or Agent did not answer in ${chatParameters.agentJoinTimeout} ms !!! for engID: ${engagementDetails.engagementId}, promiseAgentJoin: ${await promiseAgentJoin}, agentJoinTimer returned: ${agentJoinTimer}`);
+    // timeoutPromise performs a races between 2 promises i.e., how long it takes an agent to join and the timeout for an agent join set by the user
+    engagementDetailsMap[engagementDetails.engagementId].agentJoinTimer = await timeoutPromise(chatParameters.agentJoinTimeout, new Promise((resolve) => {
+        promiseMap[engagementDetails.engagementId] = resolve}));
+
+    console.log(`agentJoinTimer is ${engagementDetailsMap[engagementDetails.engagementId].agentJoinTimer} and agt join promiseMap: ${promiseMap[engagementDetails.engagementId]}`);
+
+    // if the agent fails to answer within the timeout for agent join then mark this as failed and exit the test
+    if (!engagementDetailsMap[engagementDetails.engagementId].agentJoinTimer) {
+        // errorMessage(`Agent JOIN Timed out or Agent did not answer in ${chatParameters.agentJoinTimeout} ms !!! for engID: ${engagementDetails.engagementId}, promiseAgentJoin: ${await promiseAgentJoin}, agentJoinTimer returned: ${agentJoinTimer}`);
+        errorMessage(`Agent JOIN Timed out or Agent did not answer in ${chatParameters.agentJoinTimeout} ms !!! for engID: ${engagementDetails.engagementId}, agentJoinTimer returned: ${engagementDetailsMap[engagementDetails.engagementId].agentJoinTimer}`);
         chatStatsMap["agtJoin"][1]++;
         return
     }
@@ -216,10 +224,11 @@ async function sendChat(engagementId, customerMsgText) {
 }
 
 const processAgentJoinEvent = (engagementId) => {
-    logMessage(`Agent Join Received for engId: ${engagementId} `);
+    logMessage(`Agent Join Received for engId: ${engagementId} and ${promiseMap[engagementId]}`);
 
     // verify the engagementID is stored in the promiseMap before attempting to resolve
-    if (promiseMap[engagementId]) {
+    // check that agent join timer has not expired i.e., equals false
+    if (promiseMap[engagementId] && engagementDetailsMap[engagementId].agentJoinTimer !== false) {
         chatStatsMap["agtJoin"][0]++;
         logMessage(`Engagement ID IS contained within the promiseMap: ${engagementId}`);
 
@@ -227,9 +236,9 @@ const processAgentJoinEvent = (engagementId) => {
         promiseMap[engagementId](true);
         logMessage(`============> Agent Join Promise has been resolved and set to true`);
 
-        // deleting the engID from the map due to duplicate JOINS being sent from IX
-        delete promiseMap[engagementId];
     }
+    // deleting the engID from the map
+    delete promiseMap[engagementId];
 }
 
 const processAgentSendMsgEvent = (engagementId) => {
