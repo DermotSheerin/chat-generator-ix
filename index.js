@@ -1,18 +1,17 @@
 const chatService = require("./services/chat-service");
 const chalk = require("chalk");
 const timeoutPromise = require("./timeout-promise");
-const { logMessage, errorMessage } = require("./logger/logger");
+const {logMessage, errorMessage} = require("./logger/logger");
 const server = require("./routes/index").server;
 const utils = require("./utilities/os-utils.js");
 
 const port = 8001;
 // ip = "0.0.0.0";
-const ip = "135.123.64.236";
+const ip = "135.123.64.84";
 const sutPort = 4000;
 
 const promiseMap = {};
 const engagementDetailsMap = {};
-
 
 
 // initial chat stat values
@@ -30,6 +29,7 @@ const chatStatsMap = {
 let webhookId = "";
 
 const chatParameters = {
+    framework: "Express",
     stopTest: false,
     startTime: "",
     stopTime: "",
@@ -141,7 +141,8 @@ async function createCustomerChatWorkFlow(displayName) {
 
     // timeoutPromise performs a races between 2 promises i.e., how long it takes an agent to join and the timeout for an agent join set by the user
     engagementDetailsMap[engagementDetails.engagementId].agentJoinTimer = await timeoutPromise(chatParameters.agentJoinTimeout, new Promise((resolve) => {
-        promiseMap[engagementDetails.engagementId] = resolve}));
+        promiseMap[engagementDetails.engagementId] = resolve
+    }));
 
     console.log(`agentJoinTimer is ${engagementDetailsMap[engagementDetails.engagementId].agentJoinTimer} and agt join promiseMap: ${promiseMap[engagementDetails.engagementId]}`);
 
@@ -164,7 +165,7 @@ async function createCustomerChatWorkFlow(displayName) {
         chatCounter++;
     }
 
-    // send BYE to Agent when chatSendMax is reached
+    // send BYE to Agent when chatSendMax is reached to terminate interaction from client side
     logMessage(`Customer about to send bye, engID: ${engagementDetails.engagementId}`)
     await sendChat(engagementDetails.engagementId, customerBye);
     chatStatsMap["interactEnd"][0]++;
@@ -249,6 +250,7 @@ const processAgentSendMsgEvent = (engagementId) => {
     }
 }
 
+// if terminate interaction is initiated by Agent
 const processAgentDisconnectEvent = (engagementId) => {
     // deleting the engID from the map due to duplicate TERMINATES being sent from IX
     if (promiseMap[engagementId]) {
@@ -275,4 +277,4 @@ exports.ip = ip;
 exports.port = port;
 exports.sutPort = sutPort;
 
-server.listen(port, ip,() => logMessage(`Listening on IP: ${ip}: port ${port}`));
+server.listen(port, ip, () => logMessage(`Listening on IP: ${ip}: port ${port}`));

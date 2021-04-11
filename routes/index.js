@@ -112,6 +112,7 @@ app.post("/changeChatParameters", (req, res) => {
 // retrieve Chat Parameters
 app.get("/getChatParameters", (req, res) => {
     res.send({
+        framework: index.chatParameters.framework,
         concurrentCallers: index.chatParameters.concurrentCallers,
         chatSendMax: index.chatParameters.chatSendMax,
         firstMsgSendDelay: index.chatParameters.firstMsgSendDelay,
