@@ -31,6 +31,8 @@ const io = socketIo(server, {
 // Socket.IO on() takes two arguments: the name of the event, in this case "connection",
 // and a callback which will be executed after every connection event. The connection event returns a socket object which will
 // be passed to the callback function. By using said socket you will be able to send data back to a client in real time.
+
+// listen for socket connection with 'io.on'
 io.on("connection", (socket) => {
     logMessage("New client connected");
     if (interval) {
@@ -57,7 +59,7 @@ const getChatStats = socket => {
             chatStatsMap: index.chatStatsMap,
             eventCounter: eventCounter,
             testTime: { startTime: index.chatParameters.startTime, stopTime: index.chatParameters.stopTime },
-            usedMemGraph: {name: utils.currentTime(), value: usedMem},
+            graphData: {time: utils.currentTime(), usedMem: usedMem, userTime: cpuTime.userTime, systemTime: cpuTime.systemTime},
             resourceStats: {
                 usedMem: [`${usedMem} MB`, maxValues.maxMem],
                 userTime: [`${cpuTime.userTime} secs`, maxValues.maxUserTime],
