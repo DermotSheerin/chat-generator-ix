@@ -5,6 +5,7 @@ const utils = require("../utilities/os-utils.js");
 let interval;
 let maxValues;
 let eventCounter = 0;
+const framework = "Fastify";
 
 const server = require('fastify')();
 // fastify-cors enables the use of CORS in a Fastify application.
@@ -48,7 +49,7 @@ const getChatStats = socket => {
             chatStatsMap: index.chatStatsMap,
             eventCounter: eventCounter,
             testTime: { startTime: index.chatParameters.startTime, stopTime: index.chatParameters.stopTime },
-            usedMemGraph: {name: utils.currentTime(), value: usedMem},
+            graphData: {time: utils.currentTime(), usedMem: usedMem, userTime: cpuTime.userTime, systemTime: cpuTime.systemTime},
             resourceStats: {
                 usedMem: [`${usedMem} MB`, maxValues.maxMem],
                 userTime: [`${cpuTime.userTime} secs`, maxValues.maxUserTime],
@@ -59,6 +60,8 @@ const getChatStats = socket => {
 
 
 server.post("/allEvents", (request, reply) => {
+    // increment event counter to track number of events received
+    eventCounter ++;
     // Listen for Agent Join
     if (request.body.eventType === "PARTICIPANT_ADDED" && request.body.participantType === "AGENT") {
         reply.code(200);
@@ -69,10 +72,8 @@ server.post("/allEvents", (request, reply) => {
     else if (request.body.senderType === "AGENT") {
         reply.code(200);
 
-        // after predefined delay respond to Agent message
-        setTimeout(() => {
-            index.processAgentSendMsgEvent(request.body.engagementId);
-        }, index.respondMsgDelay);
+        // resolve promiseMap for agent send message and update receiveChat statistic
+        index.processAgentSendMsgEvent(request.body.engagementId);
     }
 
     // Listen for Participant Disconnect
@@ -100,6 +101,7 @@ server.post("/changeChatParameters", (request, reply) => {
 // retrieve Chat Parameters
 server.get("/getChatParameters", (request, reply) => {
     reply.send({
+        framework: index.chatParameters.framework,
         concurrentCallers: index.chatParameters.concurrentCallers,
         chatSendMax: index.chatParameters.chatSendMax,
         firstMsgSendDelay: index.chatParameters.firstMsgSendDelay,
@@ -114,10 +116,15 @@ server.get("/getStats", (request, reply) => {
     reply.send(index.chatStatsMap);
 });
 
+// GET to reset the chatStatsMap details
+server.get("/resetStats", (request, reply) => {
+    index.resetChatStats();
+    logMessage(`---------- Stats Reset ----------`)
+});
+
 //GET to stop test gradually
 server.get("/stopTest", (request, reply) => {
-    index.chatParameters.startLoop = false;
-    reply.send(`******** Test will terminate gracefully ********`);
+    index.chatParameters.stopTest = true;
 });
 
 //GET to start test
@@ -128,13 +135,12 @@ server.get("/startTest", (request, reply) => {
     reply.send(`******** Test Starting ********`);
 });
 
-//GET to start test
+//GET to demo test
 server.get("/demoTest", (request, reply) => {
     logMessage(chalk.green("###### Demo of pipeline code added ######"));
-    logMessage(`Here is agentJoinTimeout ${index.chatParameters.gentJoinTimeout}`)
     reply.send(`******** Demo Complete 4 ********`);
 });
 
-module.exports.server = server;
+module.exports.server = {server, framework};
 
 

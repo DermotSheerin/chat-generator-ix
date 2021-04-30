@@ -12,6 +12,7 @@ app.use(bodyParser.json(), cors());
 let interval;
 let maxValues;
 let eventCounter = 0;
+const framework = "Express";
 
 const utils = require("../utilities/os-utils.js");
 
@@ -82,10 +83,9 @@ app.post("/allEvents", (req, res) => {
     else if (req.body.senderType === "AGENT") {
         res.sendStatus(200);
 
-        // after predefined delay respond to Agent message
-        setTimeout(() => {
-            index.processAgentSendMsgEvent(req.body.engagementId);
-        }, index.chatParameters.respondMsgDelay);
+        // resolve promiseMap for agent send message and update receiveChat statistic
+        index.processAgentSendMsgEvent(req.body.engagementId);
+
     }
 
     // Listen for Participant Disconnect
@@ -103,7 +103,6 @@ app.post("/changeChatParameters", (req, res) => {
     res.sendStatus(200);
     logMessage(`received chatParameters, concurrentCallers: ${req.body.concurrentCallers}`)
     index.chatParameters.concurrentCallers = Number(req.body.concurrentCallers);
-    logMessage(`concurrentCallers post, concurrentCallers: ${req.body.concurrentCallers} and in index: ${index.chatParameters.concurrentCallers}`)
     index.chatParameters.chatSendMax = req.body.chatSendMax;
     index.chatParameters.firstMsgSendDelay = req.body.firstMsgSendDelay;
     index.chatParameters.respondMsgDelay = req.body.respondMsgDelay;
@@ -126,13 +125,18 @@ app.get("/getChatParameters", (req, res) => {
 
 // GET to retrieve the chatStatsMap details
 app.get("/getStats", (req, res) => {
-    res.send(index.chatParameters.chatStatsMap);
+    res.send(index.chatStatsMap);
+});
+
+// GET to reset the chatStatsMap details
+app.get("/resetStats", (req, res) => {
+    index.resetChatStats();
+    logMessage(`---------- Stats Reset ----------`)
 });
 
 //GET to stop test gradually
 app.get("/stopTest", (req, res) => {
     index.chatParameters.stopTest = true;
-    //res.send(`******** Test will terminate gracefully ********`);
 });
 
 //GET to start test
@@ -146,10 +150,9 @@ app.get("/startTest", (req, res) => {
 //GET to start test
 app.get("/demoTest", (req, res) => {
     logMessage(chalk.green("###### Demo of pipeline code added ######"));
-    logMessage(`Here is agentJoinTimeout ${index.chatParameters.agentJoinTimeout}`)
     res.send(`******** Demo Complete 4 ********`);
 });
 
-module.exports.server = server;
+module.exports.server = {server, framework};
 
 

@@ -1,21 +1,3 @@
-// const os 	= require('os-utils');
-// const { logMessage } = require("../logger/logger");
-//
-// const cpuUsage = os.cpuUsage(data => {
-//     logMessage(`CPU Usage (%): ${data}`)
-// });
-//
-// const freeMem = () => {
-//     logMessage(`freeMem Usage (%): ${os.freememPercentage()}`)
-// }
-//
-// // const cpuUsage = os.cpuUsage = (data) => {
-// //     logMessage(`CPU Usage (%): ${data}`)
-// // }
-//
-// module.exports.cpuUsage = cpuUsage;
-// module.exports.freeMem = freeMem;
-
 const process = require("process");
 let maxMem = 0;
 let maxUserTime = 0;

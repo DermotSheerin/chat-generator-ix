@@ -2,12 +2,18 @@ const chatService = require("./services/chat-service");
 const chalk = require("chalk");
 const timeoutPromise = require("./timeout-promise");
 const {logMessage, errorMessage} = require("./logger/logger");
-const server = require("./routes/index").server;
+
+// for Express framework import the following module
+//const { server, framework } = require("./routes/index").server;
+
+// for Fastify framework import the following module
+const { server, framework } = require("./routes/indexFastify").server;
+
 const utils = require("./utilities/os-utils.js");
 
 const port = 8001;
 // ip = "0.0.0.0";
-const ip = "135.123.64.84";
+const ip = "135.123.73.23";
 const sutPort = 4000;
 
 const promiseMap = {};
@@ -26,10 +32,20 @@ const chatStatsMap = {
     interactEnd: [0, 0],
 };
 
+const resetChatStats = () => {
+    // iterate chatStatsMap to retrieve the value (array) that contains the stats for pass/fail and reset to 0
+    for (const [key, value] of Object.entries(chatStatsMap)) {
+        value.forEach((stat, index) => {
+            // reset each statistic to 0
+            value[index] = 0;
+        });
+    }
+}
+
 let webhookId = "";
 
 const chatParameters = {
-    framework: "Express",
+    framework: framework,
     stopTest: false,
     startTime: "",
     stopTime: "",
@@ -67,15 +83,6 @@ const startTest = async () => {
     let displayName = "Dermot";
     chatParameters.stopTest = false;
     chatParameters.startTime = utils.currentTime();
-
-    // if (chatParameters.framework === "Express") {
-    //     server = require("./routes/index").server;
-    //     logMessage(`Using Express`);
-    // } else {
-    //     server = require("./routes/indexFastify").server;
-    //     logMessage(`Using Fastify`);
-    // }
-
 
     for (i = 0; i < chatParameters.concurrentCallers; i++) {
         if (chatParameters.stopTest) {
@@ -122,6 +129,7 @@ async function createCustomerChatWorkFlow(displayName) {
 
     // store engagement details in map
     engagementDetailsMap[engagementDetails.engagementId] = {
+        displayName: displayName,
         sessionId: session.sessionId,
         correlationId: engagementDetails.correlationId,
         dialogId: engagementDetails.dialogId,
@@ -144,7 +152,7 @@ async function createCustomerChatWorkFlow(displayName) {
         promiseMap[engagementDetails.engagementId] = resolve
     }));
 
-    console.log(`agentJoinTimer is ${engagementDetailsMap[engagementDetails.engagementId].agentJoinTimer} and agt join promiseMap: ${promiseMap[engagementDetails.engagementId]}`);
+    //console.log(`agentJoinTimer is ${engagementDetailsMap[engagementDetails.engagementId].agentJoinTimer} and agt join promiseMap: ${promiseMap[engagementDetails.engagementId]}`);
 
     // if the agent fails to answer within the timeout for agent join then mark this as failed and exit the test
     if (!engagementDetailsMap[engagementDetails.engagementId].agentJoinTimer) {
@@ -163,12 +171,13 @@ async function createCustomerChatWorkFlow(displayName) {
         await sendChat(engagementDetails.engagementId, customerMsgText);
         await waitForAgentMsgPromise(engagementDetails.engagementId);
         chatCounter++;
+        await wait(chatParameters.respondMsgDelay);
     }
 
     // send BYE to Agent when chatSendMax is reached to terminate interaction from client side
     logMessage(`Customer about to send bye, engID: ${engagementDetails.engagementId}`)
-    await sendChat(engagementDetails.engagementId, customerBye);
-    chatStatsMap["interactEnd"][0]++;
+    const response = await sendChat(engagementDetails.engagementId, customerBye);
+    if (response) chatStatsMap["interactEnd"][0]++;
     logMessage(chalk.green(`Agent Terminated successfully engId: ${engagementDetails.engagementId} chatStats: ${Object.entries(chatStatsMap)}`));
 
 
@@ -221,11 +230,15 @@ async function sendChat(engagementId, customerMsgText) {
 
     if (!sendChat.success) {
         chatStatsMap["sendChat"][1]++;
-    } else chatStatsMap["sendChat"][0]++;
+    } else {
+        logMessage(`Agent ${engagementDetails.displayName} sent message success`);
+        chatStatsMap["sendChat"][0]++;
+    }
+    return sendChat.success;
 }
 
 const processAgentJoinEvent = (engagementId) => {
-    logMessage(`Agent Join Received for engId: ${engagementId} and ${promiseMap[engagementId]}`);
+    logMessage(`Agent Join Received for engId: ${engagementId}`);
 
     // verify the engagementID is stored in the promiseMap before attempting to resolve
     // check that agent join timer has not expired i.e., equals false
@@ -269,6 +282,7 @@ const processAgentDisconnectEvent = (engagementId) => {
 
 exports.chatParameters = chatParameters;
 exports.chatStatsMap = chatStatsMap;
+exports.resetChatStats = resetChatStats;
 exports.startTest = startTest;
 exports.processAgentJoinEvent = processAgentJoinEvent;
 exports.processAgentSendMsgEvent = processAgentSendMsgEvent;
