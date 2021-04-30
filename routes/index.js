@@ -69,6 +69,10 @@ const getChatStats = socket => {
         });
 };
 
+const resetEventCounter = () => {
+    eventCounter = 0;
+}
+
 
 app.post("/allEvents", (req, res) => {
     // increment event counter to track number of events received
@@ -153,6 +157,6 @@ app.get("/demoTest", (req, res) => {
     res.send(`******** Demo Complete 4 ********`);
 });
 
-module.exports.server = {server, framework};
+module.exports.server = {server, framework, resetEventCounter};
 
 

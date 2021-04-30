@@ -4,10 +4,10 @@ const timeoutPromise = require("./timeout-promise");
 const {logMessage, errorMessage} = require("./logger/logger");
 
 // for Express framework import the following module
-//const { server, framework } = require("./routes/index").server;
+let { server, framework, resetEventCounter } = require("./routes/index").server;
 
 // for Fastify framework import the following module
-const { server, framework } = require("./routes/indexFastify").server;
+//let { server, framework, resetEventCounter } = require("./routes/indexFastify").server;
 
 const utils = require("./utilities/os-utils.js");
 
@@ -40,6 +40,7 @@ const resetChatStats = () => {
             value[index] = 0;
         });
     }
+    resetEventCounter();
 }
 
 let webhookId = "";
