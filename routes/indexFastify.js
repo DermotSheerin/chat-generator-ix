@@ -7,35 +7,65 @@ let maxValues;
 let eventCounter = 0;
 const framework = "Fastify";
 
+
 const server = require('fastify')();
+
 // fastify-cors enables the use of CORS in a Fastify application.
 server.register(require('fastify-cors'), {
     origin: '*',
     methods: ["GET", "POST"]
 });
 
-// Since Socket.IO v3, you need to explicitly enable Cross-Origin Resource Sharing (CORS). server.server is same as httpServer
-const socketIo = require('socket.io')(server.server,
-    {
-        cors: {
-            origin: "*",
-            methods: ["GET", "POST"]
-        }
-    });
-
-socketIo.on('connection', (socket) => {
-    logMessage("New client connected");
-    if (interval) {
-        clearInterval(interval);
+server.register(require('fastify-socket.io'), {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
     }
-    interval = setInterval(() => getChatStats(socket), 1000);
+});
 
-    // clearing the interval on any new connection, and on disconnection to avoid flooding the server
-    socket.on("disconnect", () => {
-        logMessage("Client disconnected");
-        clearInterval(interval);
-    });
-})
+// function called when all the plugins have been loaded. It takes an error parameter if something went wrong
+server.ready(err => {
+    if (err) throw err
+
+    server.io.on('connection', (socket) => {
+        logMessage("New client connected");
+        if (interval) {
+            clearInterval(interval);
+        }
+        interval = setInterval(() => getChatStats(socket), 1000);
+
+        // clearing the interval on any new connection, and on disconnection to avoid flooding the server
+        socket.on("disconnect", () => {
+            logMessage("Client disconnected");
+            clearInterval(interval);
+        });
+    })
+});
+
+// original implementation before using fastify-socket.io
+// Since Socket.IO v3, you need to explicitly enable Cross-Origin Resource Sharing (CORS). server.server is same as httpServer
+// const socketIo = require('socket.io')(server.server,
+//     {
+//         cors: {
+//             origin: "*",
+//             methods: ["GET", "POST"]
+//         }
+//     });
+
+
+// server.io.on('connection', (socket) => {
+//     logMessage("New client connected");
+//     if (interval) {
+//         clearInterval(interval);
+//     }
+//     interval = setInterval(() => getChatStats(socket), 1000);
+//
+//     // clearing the interval on any new connection, and on disconnection to avoid flooding the server
+//     socket.on("disconnect", () => {
+//         logMessage("Client disconnected");
+//         clearInterval(interval);
+//     });
+// })
 
 const getChatStats = socket => {
     // Emitting a new message. Will be consumed by the client
@@ -48,12 +78,17 @@ const getChatStats = socket => {
         {
             chatStatsMap: index.chatStatsMap,
             eventCounter: eventCounter,
-            testTime: { startTime: index.chatParameters.startTime, stopTime: index.chatParameters.stopTime },
-            graphData: {time: utils.currentTime(), usedMem: usedMem, userTime: cpuTime.userTime, systemTime: cpuTime.systemTime},
+            testTime: {startTime: index.chatParameters.startTime, stopTime: index.chatParameters.stopTime},
+            graphData: {
+                time: utils.currentTime(),
+                usedMem: usedMem,
+                userTime: cpuTime.userTime,
+                systemTime: cpuTime.systemTime
+            },
             resourceStats: {
                 usedMem: [`${usedMem} MB`, maxValues.maxMem],
                 userTime: [`${cpuTime.userTime} secs`, maxValues.maxUserTime],
-                systemTime: [`${cpuTime.systemTime} secs`, maxValues.maxSystemTime ]
+                systemTime: [`${cpuTime.systemTime} secs`, maxValues.maxSystemTime]
             },
         });
 };
@@ -65,7 +100,7 @@ const resetEventCounter = () => {
 
 server.post("/allEvents", (request, reply) => {
     // increment event counter to track number of events received
-    eventCounter ++;
+    eventCounter++;
     // Listen for Agent Join
     if (request.body.eventType === "PARTICIPANT_ADDED" && request.body.participantType === "AGENT") {
         reply.code(200);

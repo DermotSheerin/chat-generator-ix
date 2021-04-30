@@ -7,7 +7,7 @@ const socketIo = require('socket.io');
 const bodyParser = require("body-parser");
 const app = express();
 const cors = require("cors");
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json(), cors());
 let interval;
 let maxValues;

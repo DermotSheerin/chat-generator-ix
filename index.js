@@ -1,18 +1,17 @@
 const chatService = require("./services/chat-service");
 const chalk = require("chalk");
 const timeoutPromise = require("./timeout-promise");
-const {logMessage, errorMessage} = require("./logger/logger");
+const { logMessage, errorMessage } = require("./logger/logger");
 
 // for Express framework import the following module
-let { server, framework, resetEventCounter } = require("./routes/index").server;
+//let { server, framework, resetEventCounter } = require("./routes/index").server;
 
 // for Fastify framework import the following module
-//let { server, framework, resetEventCounter } = require("./routes/indexFastify").server;
+let { server, framework, resetEventCounter } = require("./routes/indexFastify").server;
 
 const utils = require("./utilities/os-utils.js");
 
 const port = 8001;
-// ip = "0.0.0.0";
 const ip = "135.123.73.23";
 const sutPort = 4000;
 
