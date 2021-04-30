@@ -231,7 +231,7 @@ async function sendChat(engagementId, customerMsgText) {
     if (!sendChat.success) {
         chatStatsMap["sendChat"][1]++;
     } else {
-        logMessage(`Agent ${engagementDetails.displayName} sent message success`);
+        logMessage(`Customer ${engagementDetails.displayName} sent message success`);
         chatStatsMap["sendChat"][0]++;
     }
     return sendChat.success;
