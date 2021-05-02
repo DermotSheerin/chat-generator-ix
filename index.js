@@ -53,7 +53,7 @@ const chatParameters = {
     chatSendMax: 2,
     firstMsgSendDelay: 5000,
     respondMsgDelay: 5000,
-    delayBetweenLoops: 20000,
+    // delayBetweenLoops: 20000,
     concurrentCallers: 1
 }
 
