@@ -133,7 +133,7 @@ server.post("/changeChatParameters", (request, reply) => {
     index.chatParameters.chatSendMax = request.body.chatSendMax;
     index.chatParameters.firstMsgSendDelay = request.body.firstMsgSendDelay;
     index.chatParameters.respondMsgDelay = request.body.respondMsgDelay;
-    index.chatParameters.delayBetweenLoops = request.body.delayBetweenLoops;
+    //index.chatParameters.delayBetweenLoops = request.body.delayBetweenLoops;
     index.chatParameters.agentJoinTimeout = request.body.agentJoinTimeout;
 });
 
@@ -145,7 +145,7 @@ server.get("/getChatParameters", (request, reply) => {
         chatSendMax: index.chatParameters.chatSendMax,
         firstMsgSendDelay: index.chatParameters.firstMsgSendDelay,
         respondMsgDelay: index.chatParameters.respondMsgDelay,
-        delayBetweenLoops: index.chatParameters.delayBetweenLoops,
+        //delayBetweenLoops: index.chatParameters.delayBetweenLoops,
         agentJoinTimeout: index.chatParameters.agentJoinTimeout,
     });
 });

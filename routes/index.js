@@ -110,7 +110,7 @@ app.post("/changeChatParameters", (req, res) => {
     index.chatParameters.chatSendMax = req.body.chatSendMax;
     index.chatParameters.firstMsgSendDelay = req.body.firstMsgSendDelay;
     index.chatParameters.respondMsgDelay = req.body.respondMsgDelay;
-    index.chatParameters.delayBetweenLoops = req.body.delayBetweenLoops;
+    //index.chatParameters.delayBetweenLoops = req.body.delayBetweenLoops;
     index.chatParameters.agentJoinTimeout = req.body.agentJoinTimeout;
 });
 
@@ -122,7 +122,7 @@ app.get("/getChatParameters", (req, res) => {
         chatSendMax: index.chatParameters.chatSendMax,
         firstMsgSendDelay: index.chatParameters.firstMsgSendDelay,
         respondMsgDelay: index.chatParameters.respondMsgDelay,
-        delayBetweenLoops: index.chatParameters.delayBetweenLoops,
+        //delayBetweenLoops: index.chatParameters.delayBetweenLoops,
         agentJoinTimeout: index.chatParameters.agentJoinTimeout,
     });
 });
