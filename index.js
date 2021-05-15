@@ -4,14 +4,10 @@ const timeoutPromise = require("./utilities/timeout-promise");
 const { logMessage, errorMessage } = require("./logger/logger");
 
 // for Express framework import the following module
-//let { server, framework, resetEventCounter } = require("./routes/index").server;
+let { server, framework, resetEventCounter } = require("./routes/index").server;
 
 // for Fastify framework import the following module
-let {
-  server,
-  framework,
-  resetEventCounter,
-} = require("./routes/indexFastify").server;
+//let {  server, framework, resetEventCounter } = require("./routes/indexFastify").server;
 
 const utils = require("./utilities/utils.js");
 
