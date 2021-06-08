@@ -6,7 +6,7 @@ const { logMessage, errorMessage } = require("./logger/logger");
 // for Express framework import the following module
 //let { server, framework, resetEventCounter } = require("./routes/index").server;
 
-for Fastify framework import the following module
+//for Fastify framework import the following module
 let {
   server,
   framework,
